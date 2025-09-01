@@ -1,50 +1,107 @@
-# Welcome to your Expo app 👋
+🪁 Windsurf Prompt – Freely App
+📖 Project Overview
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Freely is a mobile app where users can discover and share free food and items nearby.
+Target audience: Gen Z, students, and the public.
+Goal: Help people save money, reduce waste, and build community.
 
-## Get started
+🛠️ Tech Stack
 
-1. Install dependencies
+Frontend: React Native (Expo)
 
-   ```bash
-   npm install
-   ```
+Backend: Appwrite (Database, Auth, Storage, Realtime, Functions)
 
-2. Start the app
+Auth: Appwrite Auth (Google + Apple sign-in)
 
-   ```bash
-   npx expo start
-   ```
+Storage: Appwrite Storage (freebie photos)
 
-In the output, you'll find options to open the app in a
+Realtime: Appwrite subscriptions for feed + chat updates
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Push Notifications: Appwrite Functions + Expo Notifications
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+📂 Appwrite Collections
+users
 
-## Get a fresh project
+name (string)
 
-When you're ready, run:
+avatar_url (string)
 
-```bash
-npm run reset-project
-```
+joined_at (datetime)
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+freebies
 
-## Learn more
+user_id (relation → users)
 
-To learn more about developing your project with Expo, look at the following resources:
+title (string)
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+category (enum: food, item)
 
-## Join the community
+photo_id (string, storage file id)
 
-Join our community of developers creating universal apps.
+location (string/GeoJSON)
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+created_at (datetime)
+
+expires_at (datetime, optional)
+
+claims
+
+freebie_id (relation → freebies)
+
+claimer_id (relation → users)
+
+status (enum: pending, accepted, taken)
+
+created_at (datetime)
+
+messages
+
+claim_id (relation → claims)
+
+sender_id (relation → users)
+
+text (string)
+
+created_at (datetime)
+
+🎯 Core Features
+
+Feed: list of nearby freebies (with category filters).
+
+Map View: freebies shown on a map.
+
+Post Freebie: photo + title + category + location.
+
+Claim & Chat: users can claim freebies and chat with poster.
+
+Realtime Updates: new posts and messages appear instantly.
+
+Push Notifications: new nearby freebies and claim status updates.
+
+🚀 Windsurf Goals
+
+When writing or refactoring code in this repo, please:
+
+Use clean, modular React Native components.
+
+Follow best practices for Appwrite SDK integration.
+
+Ensure reusable hooks for data fetching and realtime subscriptions.
+
+Keep code production-ready, easy to scale, and simple for a solo dev.
+
+Document any assumptions directly in comments.
+
+📌 Roadmap (MVP First)
+
+✅ Auth (Google/Apple via Appwrite).
+
+✅ Post Freebies (with photo + location).
+
+✅ Feed (list + filter).
+
+🔜 Map View.
+
+🔜 Claim + Chat (with Appwrite Realtime).
+
+🔜 Notifications (Appwrite Functions + Expo)# FindFreebie
