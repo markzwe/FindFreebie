@@ -1,75 +1,216 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList, Dimensions } from 'react-native';
+import { useEffect, useState } from 'react';
+import { router } from 'expo-router';
+import { getCurrentUser, getLocation, logout } from '../../lib/appwrite';
+import { COLORS } from '../../constants/theme';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import SearchBar from '@/components/SearchBar';
+import { useLocalSearchParams } from 'expo-router';
+import { useAppwrite } from '@/lib/useAppwrite';
+import { getItems } from '@/lib/appwrite';
+import Filter from '@/components/Filter';
+import { Ionicons } from '@expo/vector-icons';
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+const { width, height } = Dimensions.get('window');
 
-export default function HomeScreen() {
+export default function Home() {
+  const { category, query } = useLocalSearchParams<{category?: string, query?: string}>();
+  const { data, refetch, loading } = useAppwrite({
+    fn: getItems,
+    params: { category, query },
+    skip: !category && !query
+  });
+
+  useEffect(() => {
+    refetch({ category, query });
+  }, [category, query]);
+
+  const location = useAppwrite({
+    fn: async () => {
+      const location = await getLocation();
+      return location;
+    },
+    skip: true,
+  });
+
+  console.log('location', location.data);
+  
+  
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <SafeAreaView style={styles.container}>
+      <FlatList
+        data={data || []}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            {/* Search Section */}
+            <View style={styles.searchSection}>
+              <SearchBar />
+            </View>
+
+            {/* Filter Section */}
+            <View style={styles.filterSection}>
+              <Filter />
+            </View>
+            
+            {/* Section Header */}
+            <View style={styles.sectionHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Today's Pick</Text>
+                <Text style={styles.sectionSubtitle}>{data?.length || 0} Freebies found</Text>
+              </View>
+              <View style={styles.locationRow}>
+                <Ionicons name="location" size={20} color={COLORS.accent} />
+                  <Text style={styles.locationText}>45409</Text>
+                </View>
+            </View>
+          </View>
+        }
+        renderItem={({ item }) => (
+          <View style={styles.itemCard}>
+            {/* Your item card content will go here */}
+            <Text>Item Card</Text>
+          </View>
+        )}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconContainer}>
+              <Ionicons name="search-outline" size={64} color={COLORS.gray} />
+            </View>
+            <Text style={styles.emptyStateTitle}>No items found</Text>
+            <Text style={styles.emptyStateText}>
+              Try adjusting your search terms or browse different categories
+            </Text>
+
+          </View>
+        }
+        numColumns={1}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
   },
-  stepContainer: {
-    gap: 8,
+  content: {
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+  },
+  header: {
+    gap: 10,
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  
+  
+  // Location Section
+
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  locationText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.accent,
+    marginRight: 8,
+  },
+
+  // Search and Filter
+  searchSection: {
+    marginTop: 0,
+  },
+  filterSection: {
+    marginTop: 0,
+  },
+
+  // Section Header
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    marginBottom: 10,
+  },
+  sectionTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 2,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: COLORS.gray,
+    fontWeight: '500',
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.accent + '15',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  seeAllText: {
+    color: COLORS.accent,
+    fontWeight: '600',
+    fontSize: 14,
+    marginRight: 4,
+  },
+
+  // Item Cards
+  itemCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
+  // Empty State
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 32,
+  },
+  emptyIconContainer: {
+    backgroundColor: COLORS.gray + '15',
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  emptyStateTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 8,
+  },
+  emptyStateText: {
+    fontSize: 14,
+    color: COLORS.gray,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  emptyStateButton: {
+    backgroundColor: COLORS.accent,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  emptyStateButtonText: {
+    color: COLORS.white,
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
