@@ -1,7 +1,7 @@
 import { COLORS, SPACING, RADIUS, FONT } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -20,6 +20,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import DateTimePickerModal from "@/components/DateTimePickerModal";
 import DescriptionModal from "@/components/DescriptionModal";
 import MapView from "@/components/MapView";
+import * as Location from 'expo-location';
+import { LocationType } from "@/type";
 
 export default function AddItem() {
   const router = useRouter();
@@ -34,6 +36,22 @@ export default function AddItem() {
   const [date, setDate] = useState<Date>(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isDescriptionModalVisible, setIsDescriptionModalVisible] = useState(false);
+  const [location, setLocation] = useState<LocationType | null>(null);
+   useEffect(() => {
+        async function getCurrentLocation() {
+          let location = await Location.getCurrentPositionAsync({});
+          setLocation({
+            coordinates: {
+              latitude: location.coords.latitude,
+              longitude: location.coords.longitude,
+            },
+          });
+        }
+    
+        getCurrentLocation();
+      }, []);
+
+
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -61,7 +79,7 @@ export default function AddItem() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+   
     >
       <SafeAreaView style={styles.contentContainer}>
         {/* HEADER */}
@@ -215,9 +233,56 @@ export default function AddItem() {
               </View>
             </View>
 
-            {/* AVAILABLE UNTIL */}
+            {/* From */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Available Until</Text>
+              <Text style={styles.fieldLabel}>From</Text>
+              <TouchableOpacity
+                style={styles.dateButton}
+                onPress={() => setShowDatePicker(true)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.dateSection}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={20}
+                    color={COLORS.accent}
+                  />
+                  <View style={styles.dateInfo}>
+                    <Text style={styles.dateLabel}>Date</Text>
+                    <Text style={styles.dateValue}>
+                      {date.toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.dateDivider} />
+                
+                <View style={styles.dateSection}>
+                  <Ionicons
+                    name="time-outline"
+                    size={20}
+                    color={COLORS.accent}
+                  />
+                  <View style={styles.dateInfo}>
+                    <Text style={styles.dateLabel}>Time</Text>
+                    <Text style={styles.dateValue}>
+                      {date.toLocaleTimeString([], { 
+                        hour: "2-digit", 
+                        minute: "2-digit" 
+                      })}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity> 
+          
+            </View>
+
+            <View style={styles.fieldContainer}>
+              <Text style={styles.fieldLabel}>To</Text>
               <TouchableOpacity
                 style={styles.dateButton}
                 onPress={() => setShowDatePicker(true)}
@@ -263,11 +328,11 @@ export default function AddItem() {
           
             </View>
             {/* MAP */}
-            <MapView />
+            <View style={styles.fieldContainer}> 
+              <Text style={styles.fieldLabel}>Location</Text> 
+              <MapView location={location as LocationType} />
+            </View>
           </View>
-
-          {/* BOTTOM SPACER */}
-          <View style={styles.bottomSpacer} />
         </ScrollView>
       </SafeAreaView>
       {/* MODALS */}
@@ -278,7 +343,7 @@ export default function AddItem() {
                 setDescription={setDescription}
                 isSharing={isSharing}
               />
-                    <DateTimePickerModal
+                  <DateTimePickerModal
                   isVisible={showDatePicker}
                   onClose={() => setShowDatePicker(false)}
                   date={date}
@@ -297,7 +362,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 20,
   },
 
   /* HEADER */
@@ -424,13 +489,13 @@ const styles = StyleSheet.create({
 
   /* FORM FIELDS */
   fieldContainer: {
-    marginBottom: 0,
+    marginBottom: SPACING.md,
   },
   fieldLabel: {
     fontSize: FONT.size.md,
     color: COLORS.text,
     fontWeight: "600",
-    marginBottom: SPACING.sm,
+    marginVertical: SPACING.md,
     letterSpacing: -0.2,
   },
   required: {
@@ -504,6 +569,7 @@ const styles = StyleSheet.create({
 
   /* DATE */
   dateButton: {
+    marginTop: SPACING.lg,
     flexDirection: "row",
     alignItems: "center",
     padding: SPACING.lg,
@@ -541,8 +607,11 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  /* BOTTOM SPACER */
-  bottomSpacer: {
-    height: SPACING.xl,
+  /* MAP */
+  mapContainer: {
+    marginTop: SPACING.lg,
+    backgroundColor: COLORS.surface,
+    borderColor: COLORS.border,
   },
+
 });

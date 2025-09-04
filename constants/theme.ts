@@ -22,6 +22,7 @@ export const COLORS = {
   success: "#2E7D32",
   successLight: "#81C784",
   successDark: "#1B5E20",
+  error: "#D32F2F",
 
   danger: "#D32F2F",
   dangerLight: "#E57373",

@@ -42,6 +42,7 @@ export default function DateTimePickerModal({
         {/* PICKER */}
         <View style={styles.pickerWrapper}>
           <DateTimePicker
+            themeVariant="light"
             value={date}
             mode="datetime"
             display={Platform.OS === "ios" ? "spinner" : "default"}

@@ -44,4 +44,9 @@ interface DescriptionModalProps {
     setDescription: (description: string) => void;
     isSharing: boolean;
 }
-    
+export interface LocationType{
+  coordinates: {
+    latitude: number;
+    longitude: number;
+  };
+}

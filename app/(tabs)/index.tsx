@@ -10,6 +10,7 @@ import { useAppwrite } from '@/lib/useAppwrite';
 import { getItems } from '@/lib/appwrite';
 import Filter from '@/components/Filter';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 
 const { width, height } = Dimensions.get('window');
 
@@ -25,15 +26,28 @@ export default function Home() {
     refetch({ category, query });
   }, [category, query]);
 
-  const location = useAppwrite({
-    fn: async () => {
-      const location = await getLocation();
-      return location;
-    },
-    skip: true,
-  });
+    const [location, setLocation] = useState<Location.LocationObject | null>(null);
+    const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  
+    useEffect(() => {
+      async function getCurrentLocation() {
+        
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          setErrorMsg('Permission to access location was denied');
+          return;
+        }
+  
+        let location = await Location.getCurrentPositionAsync({});
+        setLocation(location);
+      }
+  
+      getCurrentLocation();
+    }, []);
 
-  console.log('location', location.data);
+
+
+  console.log('location', location);
   
   
   return (
