@@ -11,6 +11,7 @@ import { getItems } from '@/lib/appwrite';
 import Filter from '@/components/Filter';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { CreateItemData, Item } from '@/type';
 
 const { width, height } = Dimensions.get('window');
 
@@ -21,6 +22,7 @@ export default function Home() {
     params: { category, query },
     skip: !category && !query
   });
+  console.log('data', data as unknown as CreateItemData[]);
 
   useEffect(() => {
     refetch({ category, query });
@@ -44,16 +46,12 @@ export default function Home() {
   
       getCurrentLocation();
     }, []);
-
-
-
-  console.log('location', location);
   
   
   return (
     <SafeAreaView style={styles.container}>
       <FlatList
-        data={data || []}
+        data={data as unknown as CreateItemData[]}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
         ListHeaderComponent={

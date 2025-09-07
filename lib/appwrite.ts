@@ -1,8 +1,10 @@
-import { Account, Client, OAuthProvider, Databases, Avatars, ID, TablesDB, Query, Locale } from "react-native-appwrite";
+import { Account, Client, OAuthProvider, Databases, Avatars, ID, TablesDB, Query, Locale, Storage } from "react-native-appwrite";
+
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
 import { makeRedirectUri } from 'expo-auth-session'
 import * as WebBrowser from 'expo-web-browser';
+import { Item, CreateItemData, CoordinatesType } from "@/type";
 
 export const appwriteConfig = {
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
@@ -13,12 +15,13 @@ export const appwriteConfig = {
     imagesTableId: process.env.EXPO_PUBLIC_APPWRITE_IMAGES_TABLE_ID,
     userTableId: process.env.EXPO_PUBLIC_APPWRITE_USER_TABLE_ID,
     itemsTableId: process.env.EXPO_PUBLIC_APPWRITE_ITEMS_TABLE_ID,
+    bucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID,
 };
 export const client = new Client();
 client.setEndpoint(appwriteConfig.endpoint!);
 client.setProject(appwriteConfig.projectId!);
 client.setPlatform(appwriteConfig.platform!);
-
+export const storage = new Storage(client);      // For file storage
 export const account = new Account(client);
 export const databases = new Databases(client);
 export const avatar = new Avatars(client);
@@ -123,7 +126,7 @@ export const createUser = async (name: string, email: string) => {
             console.log("No authenticated user found");
             return null;
         }
-        
+     
         // Check if user already exists in database
         try {
             const existingUser = await tablesDB.listRows({
@@ -161,13 +164,94 @@ export const createUser = async (name: string, email: string) => {
         console.log("Error creating user:", error);
         return null;
     }
+}// Fixed uploadImageToStorage function
+async function uploadImageToStorage(imageUrl: string) {
+    try {
+        // Download the image from the URL
+        const response = await fetch(imageUrl);
+        const blob = await response.blob();
+
+        // Prepare the file object for upload
+        const fileObj = {
+            name: imageUrl.split("/").pop() || `file-${Date.now()}.jpg`,
+            type: blob.type,
+            size: blob.size,
+            uri: imageUrl,
+        };
+
+        // Upload the file to Appwrite storage
+        const file = await storage.createFile({
+            bucketId: appwriteConfig.bucketId!,
+            fileId: ID.unique(),
+            file: fileObj
+        });
+
+        // Fixed: Use bucketId instead of imagesTableId for getFileViewURL
+        return storage.getFileViewURL(appwriteConfig.bucketId!, file.$id);
+    } catch (error) {
+        console.log("Error uploading image to storage:", error);
+        throw error;
+    }
 }
 
+// Fixed addItems function
+export async function addItems({
+    title,
+    description,
+    location,
+    category,
+    image,
+    eventDate,
+    startTime,
+    endTime
+}: CreateItemData) {
+    try {
+        const user = await getCurrentUser();
+        if (!user) {
+            throw new Error('User not authenticated');
+        }
+        console.log("User authenticated:", user);
+        const userIdfromDb = await getUserFromDatabase();
+        
+
+        const uploadedImage = await uploadImageToStorage(image);
+
+        const newItem = await tablesDB.createRow({
+            databaseId: appwriteConfig.databaseId!,
+            tableId: appwriteConfig.itemsTableId!,
+            rowId: ID.unique(),
+            data: {
+                user: userIdfromDb?.$id,
+                title,
+                description: description || undefined,
+                location: JSON.stringify(location),
+                category,
+                image: uploadedImage,
+                // Convert dates to ISO strings for database storage
+                eventDate: eventDate.toISOString(),
+                startTime: startTime?.toISOString(),
+                endTime: endTime?.toISOString(),
+            }
+        });
+        
+        console.log("New item created in database:", newItem);
+        return newItem;
+    } catch (error) {
+        console.log("Error creating item:", error);
+        return null;
+    }
+}
+
+// Fixed getItems function
 export async function getItems({category, query}: {category?: string, query?: string}) {
     try {
         const queries: string[] = [];
-        if (category) queries.push(Query.equal("categories", category));
-        if (query) queries.push(Query.search("name", query));
+        
+        // Fixed: Use consistent field name
+        if (category) queries.push(Query.equal("category", category));
+        
+        // Fixed: Search in title field instead of name
+        if (query) queries.push(Query.search("title", query));
 
         const items = await tablesDB.listRows({
             databaseId: appwriteConfig.databaseId!,
@@ -175,9 +259,19 @@ export async function getItems({category, query}: {category?: string, query?: st
             queries
         });
 
-        return items.rows;
+        // Convert date strings back to Date objects if needed
+        const processedItems = items.rows.map(item => ({
+            ...item,
+            eventDate: new Date(item.eventDate),
+            location: JSON.stringify(item.location),
+            startTime: item.startTime ? new Date(item.startTime) : undefined,
+            endTime: item.endTime ? new Date(item.endTime) : undefined,
+        }));
+
+        return processedItems;
        
     } catch (error) {
         console.log("Error getting items:", error);
+        return [];
     }
 }

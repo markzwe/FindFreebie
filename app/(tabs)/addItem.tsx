@@ -1,3 +1,4 @@
+// Fixed AddItem component with proper optional time handling
 import { COLORS, SPACING, RADIUS, FONT } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
@@ -21,37 +22,96 @@ import DateTimePickerModal from "@/components/DateTimePickerModal";
 import DescriptionModal from "@/components/DescriptionModal";
 import MapView from "@/components/MapView";
 import * as Location from 'expo-location';
-import { LocationType } from "@/type";
+import { CoordinatesType, AddressType } from "@/type";
+import { addItems } from "@/lib/appwrite";
 
 export default function AddItem() {
   const router = useRouter();
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [caption, setCaption] = useState("");
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [isSharing, setIsSharing] = useState(false);
 
-  const [category, setCategory] = useState<"Food" | "Item" | null>(null);
+  const [category, setCategory] = useState<"Food" | "Item">("Food");
   const [date, setDate] = useState<Date>(new Date());
+  
+  // FIXED: Initialize times as undefined since they're optional
+  const [startTime, setStartTime] = useState<Date | undefined>(undefined);
+  const [endTime, setEndTime] = useState<Date | undefined>(undefined);
+  
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [isDescriptionModalVisible, setIsDescriptionModalVisible] = useState(false);
-  const [location, setLocation] = useState<LocationType | null>(null);
-   useEffect(() => {
-        async function getCurrentLocation() {
-          let location = await Location.getCurrentPositionAsync({});
-          setLocation({
-            coordinates: {
-              latitude: location.coords.latitude,
-              longitude: location.coords.longitude,
-            },
-          });
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  
+  const [location, setLocation] = useState<CoordinatesType | null>(null);
+  const [address, setAddress] = useState<AddressType>({
+    name: "",
+    postalCode: ""
+  });
+
+  useEffect(() => {
+    async function getCurrentLocation() {
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('Permission to access location was denied');
+          return;
         }
+
+        let location = await Location.getCurrentPositionAsync({});
+        setLocation({
+          coordinates: {
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          },
+        });
+      } catch (error) {
+        console.log('Error getting location:', error);
+      }
+    }
+
+    getCurrentLocation();
+  }, []);
+
+  useEffect(() => {
+    const getAddress = async () => {
+      if (location?.coordinates?.latitude && location?.coordinates?.longitude) {
+        try {
+          const reverseGeoCoding = await Location.reverseGeocodeAsync({
+            latitude: location.coordinates.latitude,
+            longitude: location.coordinates.longitude,
+          });
+          setAddress({
+            name: reverseGeoCoding[0]?.name || reverseGeoCoding[0]?.street || "",
+            postalCode: reverseGeoCoding[0]?.postalCode || ""
+          });
+        } catch (error) {
+          console.log('Error getting address:', error);
+        }
+      }
+    };
+
+    getAddress();
+  }, [location]);
+
+  // FIXED: Initialize times when time picker is enabled
+  const handleTimePickerToggle = (enabled: boolean) => {
+    setShowTimePicker(enabled);
     
-        getCurrentLocation();
-      }, []);
-
-
+    if (enabled && (!startTime || !endTime)) {
+      // Initialize times when time picker is first enabled
+      const now = new Date();
+      const oneHourLater = new Date(now.getTime() + 60 * 60 * 1000);
+      
+      setStartTime(now);
+      setEndTime(oneHourLater);
+    } else if (!enabled) {
+      // Clear times when time picker is disabled
+      setStartTime(undefined);
+      setEndTime(undefined);
+    }
+  };
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -65,12 +125,49 @@ export default function AddItem() {
   };
 
   const handleShare = async () => {
+    if (!selectedImage || !title.trim() || !category) {
+      console.log("Form validation failed");
+      return;
+    }
+
     setIsSharing(true);
-    // TODO: upload to backend (image + metadata)
-    setTimeout(() => {
+    
+    try {
+      // FIXED: Better location handling
+      const result = await addItems({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        location: location!,
+        category : category, // This will be mapped to 'category' in the database
+        image: selectedImage,
+        eventDate: date,
+        // FIXED: Only pass times if they're actually set
+        startTime: showTimePicker && startTime ? startTime : undefined,
+        endTime: showTimePicker && endTime ? endTime : undefined,
+      });
+
+      if (result) {
+        console.log("Item created successfully:", result);
+        
+        // Reset form
+        setTitle("");
+        setDescription("");
+        setSelectedImage(null);
+        setCategory("Food");
+        setDate(new Date());
+        setStartTime(undefined);
+        setEndTime(undefined);
+        setShowTimePicker(false);
+        
+        router.replace("/");
+      } else {
+        console.log("Failed to create item");
+      }
+    } catch (error) {
+      console.error("Error sharing item:", error);
+    } finally {
       setIsSharing(false);
-      router.replace("/"); // Go home after posting
-    }, 1500);
+    }
   };
 
   const isFormValid = selectedImage && title.trim() && category;
@@ -79,7 +176,6 @@ export default function AddItem() {
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
-   
     >
       <SafeAreaView style={styles.contentContainer}>
         {/* HEADER */}
@@ -154,7 +250,7 @@ export default function AddItem() {
                   <View style={styles.imageIconContainer}>
                     <Ionicons name="camera-outline" size={32} color={COLORS.accent} />
                   </View>
-                  <Text style={styles.emptyImageTitle}>Add Photo</Text>
+                  <Text style={styles.emptyImageTitle}>Add Photo (Required)</Text>
                   <Text style={styles.emptyImageSubtitle}>
                     Choose a clear image of your freebie
                   </Text>
@@ -165,13 +261,11 @@ export default function AddItem() {
 
           {/* FORM FIELDS */}
           <View style={styles.section}>
+            {/* TITLE */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>
-                Title <Text style={styles.required}>*</Text>
-              </Text>
               <TextInput
                 style={[styles.input, title.trim() && styles.inputFilled]}
-                placeholder="What are you sharing?"
+                placeholder="Title (Required)"
                 placeholderTextColor={COLORS.textMuted}
                 value={title}
                 onChangeText={setTitle}
@@ -182,17 +276,17 @@ export default function AddItem() {
 
             {/* DESCRIPTION */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>Description</Text>
               <TouchableOpacity 
                 style={[styles.input]}
                 onPress={() => setIsDescriptionModalVisible(true)}
+                disabled={isSharing}
               >
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <Text 
                     style={[styles.description, !description && { color: COLORS.textMuted }]} 
                     numberOfLines={1}
                   >
-                    {description || 'Add a description...'}
+                    {description || 'Description (Recommended)'}
                   </Text>
                 </View>
               </TouchableOpacity>
@@ -201,7 +295,7 @@ export default function AddItem() {
             {/* CATEGORY */}
             <View style={styles.fieldContainer}>
               <Text style={styles.fieldLabel}>
-                Category <Text style={styles.required}>*</Text>
+                Category <Text style={styles.required}>(Required)</Text>
               </Text>
               <View style={styles.categoryRow}>
                 {["Food", "Item"].map((c) => (
@@ -233,13 +327,13 @@ export default function AddItem() {
               </View>
             </View>
 
-            {/* From */}
+            {/* FIXED: Date & Time with proper optional time handling */}
             <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>From</Text>
               <TouchableOpacity
                 style={styles.dateButton}
                 onPress={() => setShowDatePicker(true)}
                 activeOpacity={0.7}
+                disabled={isSharing}
               >
                 <View style={styles.dateSection}>
                   <Ionicons
@@ -258,7 +352,7 @@ export default function AddItem() {
                     </Text>
                   </View>
                 </View>
-                
+        
                 <View style={styles.dateDivider} />
                 
                 <View style={styles.dateSection}>
@@ -269,90 +363,83 @@ export default function AddItem() {
                   />
                   <View style={styles.dateInfo}>
                     <Text style={styles.dateLabel}>Time</Text>
-                    <Text style={styles.dateValue}>
-                      {date.toLocaleTimeString([], { 
-                        hour: "2-digit", 
-                        minute: "2-digit" 
-                      })}
-                    </Text>
+                    {showTimePicker && startTime && endTime ? (
+                      <Text style={styles.dateValue}>
+                        {startTime.toLocaleTimeString([], { 
+                          hour: "2-digit", 
+                          minute: "2-digit",
+                          hour12: true
+                        })}
+                        {` to\n`}
+                        {endTime.toLocaleTimeString([], { 
+                          hour: "2-digit", 
+                          minute: "2-digit",
+                          hour12: true
+                        })}
+                      </Text>
+                    ) : (
+                      <Text style={[styles.dateValue, { color: COLORS.textMuted }]}>
+                        Optional
+                      </Text>
+                    )}
                   </View>
                 </View>
               </TouchableOpacity> 
-          
             </View>
 
-            <View style={styles.fieldContainer}>
-              <Text style={styles.fieldLabel}>To</Text>
-              <TouchableOpacity
-                style={styles.dateButton}
-                onPress={() => setShowDatePicker(true)}
-                activeOpacity={0.7}
-              >
-                <View style={styles.dateSection}>
-                  <Ionicons
-                    name="calendar-outline"
-                    size={20}
-                    color={COLORS.accent}
-                  />
-                  <View style={styles.dateInfo}>
-                    <Text style={styles.dateLabel}>Date</Text>
-                    <Text style={styles.dateValue}>
-                      {date.toLocaleDateString('en-US', {
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                      })}
-                    </Text>
-                  </View>
-                </View>
-                
-                <View style={styles.dateDivider} />
-                
-                <View style={styles.dateSection}>
-                  <Ionicons
-                    name="time-outline"
-                    size={20}
-                    color={COLORS.accent}
-                  />
-                  <View style={styles.dateInfo}>
-                    <Text style={styles.dateLabel}>Time</Text>
-                    <Text style={styles.dateValue}>
-                      {date.toLocaleTimeString([], { 
-                        hour: "2-digit", 
-                        minute: "2-digit" 
-                      })}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity> 
-          
-            </View>
-            {/* MAP */}
+            {/* LOCATION/MAP */}
             <View style={styles.fieldContainer}> 
-              <Text style={styles.fieldLabel}>Location</Text> 
-              <MapView location={location as LocationType} />
+              <TouchableOpacity
+                style={styles.input}
+                onPress={() => {}} // You can implement map modal here
+                activeOpacity={0.7}
+                disabled={isSharing}
+              >
+                <Text style={styles.locationText}>Location</Text>
+                <Text style={styles.mapButtonText}>
+                  {address?.name && address?.postalCode 
+                    ? `${address.name}, ${address.postalCode}` 
+                    : location?.coordinates
+                    ? `${location.coordinates.latitude.toFixed(4)}, ${location.coordinates.longitude.toFixed(4)}`
+                    : "Getting location..."}
+                </Text>
+              </TouchableOpacity>
+
+              {location && (
+                <MapView location={location} setLocation={setLocation} />
+              )}
             </View>
           </View>
         </ScrollView>
       </SafeAreaView>
+
       {/* MODALS */}
       <DescriptionModal
-                isVisible={isDescriptionModalVisible}
-                onClose={() => setIsDescriptionModalVisible(false)}
-                description={description}
-                setDescription={setDescription}
-                isSharing={isSharing}
-              />
-                  <DateTimePickerModal
-                  isVisible={showDatePicker}
-                  onClose={() => setShowDatePicker(false)}
-                  date={date}
-                  onDateChange={(date) => setDate(date)}
-                />
+        isVisible={isDescriptionModalVisible}
+        onClose={() => setIsDescriptionModalVisible(false)}
+        description={description}
+        setDescription={setDescription}
+        isSharing={isSharing}
+      />
+      
+      {/* FIXED: Pass proper values to DateTimePickerModal */}
+      <DateTimePickerModal
+        isVisible={showDatePicker}
+        onClose={() => setShowDatePicker(false)}
+        currentDate={date}
+        startTime={startTime || new Date()} // Provide fallback
+        endTime={endTime || new Date()}     // Provide fallback
+        showTimePicker={showTimePicker}
+        setShowTimePicker={handleTimePickerToggle} // Use the fixed handler
+        onDateChange={(date) => setDate(date)}
+        onStartTimeChange={(time: Date) => setStartTime(time)}
+        onEndTimeChange={(time: Date) => setEndTime(time)}
+      />
     </KeyboardAvoidingView>
   );
 }
 
+// ... styles remain the same
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -372,7 +459,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
-    backgroundColor: COLORS.surface,
+    backgroundColor: COLORS.background,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
   },
@@ -489,23 +576,23 @@ const styles = StyleSheet.create({
 
   /* FORM FIELDS */
   fieldContainer: {
-    marginBottom: SPACING.md,
+    marginVertical: SPACING.sm,
   },
   fieldLabel: {
     fontSize: FONT.size.md,
     color: COLORS.text,
     fontWeight: "600",
-    marginVertical: SPACING.md,
+    marginVertical: SPACING.sm,
     letterSpacing: -0.2,
   },
   required: {
-    color: COLORS.accent,
+    color: COLORS.danger,
   },
   input: {
     backgroundColor: COLORS.surface,
     borderRadius: RADIUS.md,
     paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
+    paddingVertical: SPACING.sm,
     fontSize: FONT.size.md,
     color: COLORS.text,
     borderWidth: 2,
@@ -521,7 +608,7 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 10,
     textAlignVertical: "top",
-    paddingTop: SPACING.md,
+    paddingTop: SPACING.sm,
   },
   characterCount: {
     fontSize: FONT.size.xs,
@@ -569,7 +656,6 @@ const styles = StyleSheet.create({
 
   /* DATE */
   dateButton: {
-    marginTop: SPACING.lg,
     flexDirection: "row",
     alignItems: "center",
     padding: SPACING.lg,
@@ -598,7 +684,7 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontWeight: "500",
     textTransform: "uppercase",
-    letterSpacing: 0.5,
+    letterSpacing: 0,
   },
   dateValue: {
     fontSize: FONT.size.md,
@@ -607,11 +693,23 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
+  locationText: {
+    fontSize: FONT.size.sm,
+    color: COLORS.textMuted,
+    fontWeight: "500",
+    marginTop: 2,
+  },
+
   /* MAP */
   mapContainer: {
     marginTop: SPACING.lg,
     backgroundColor: COLORS.surface,
     borderColor: COLORS.border,
+  },
+  mapButtonText: {
+    fontSize: FONT.size.md,
+    color: COLORS.text,
+    fontWeight: "600",
   },
 
 });

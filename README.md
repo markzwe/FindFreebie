@@ -21,11 +21,8 @@ Push Notifications: Appwrite Functions + Expo Notifications
 
 Feed: list of nearby freebies (with category filters).
 
-Map View: freebies shown on a map.
-
 Post Freebie: photo + title + category + location.
 
-Claim & Chat: users can claim freebies and chat with poster.
 
 Realtime Updates: new posts and messages appear instantly.
 

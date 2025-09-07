@@ -13,7 +13,7 @@ export interface AppwriteUser extends Models.User<Models.Preferences> {
     email: string;
 }
 
-export interface Category{
+export interface Category {
     $id: string;
     name: string;
 }
@@ -21,32 +21,54 @@ export interface Category{
 export interface Item extends Models.Document {
     title: string;
     description?: string;
-    location : ip;
+    location: CoordinatesType; // Changed to string to match CreateItemData
     categories: string;
     image: string;
+    eventDate: string | Date; // Allow both string (from DB) and Date (processed)
+    startTime?: string | Date;
+    endTime?: string | Date;
 }
 
-export interface User extends Models.Document {
-    name: string;
-    email: string;
-    avatar: string;
+export interface CoordinatesType {
+    coordinates: {
+        latitude: number;
+        longitude: number;
+    };
 }
- interface DateTimePickerModalProps {
+
+export interface AddressType {
+    name: string;
+    postalCode: string;
+}
+
+export interface CreateItemData {
+    title: string;
+    description?: string;
+    location: CoordinatesType;
+    category: string;
+    image: string;
+    eventDate: Date;
+    startTime?: Date;
+    endTime?: Date;
+}
+
+interface DateTimePickerModalProps {
     isVisible: boolean;
     onClose: () => void;
-    date: Date;
+    currentDate: Date;
+    startTime: Date;
+    endTime: Date;
+    showTimePicker: boolean;
+    setShowTimePicker: (showTimePicker: boolean) => void;
     onDateChange: (date: Date) => void;
+    onStartTimeChange: (time: Date) => void;
+    onEndTimeChange: (time: Date) => void;
 }
+
 interface DescriptionModalProps {
     isVisible: boolean;
     onClose: () => void;
     description: string;
     setDescription: (description: string) => void;
     isSharing: boolean;
-}
-export interface LocationType{
-  coordinates: {
-    latitude: number;
-    longitude: number;
-  };
 }
