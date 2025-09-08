@@ -13,6 +13,7 @@ import {
   ScrollView,
   TextInput,
   StyleSheet,
+  Modal,
 } from "react-native";
 
 import { Image } from "expo-image";
@@ -173,6 +174,7 @@ export default function AddItem() {
   const isFormValid = selectedImage && title.trim() && category;
 
   return (
+    
     <KeyboardAvoidingView
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={styles.container}
@@ -436,6 +438,7 @@ export default function AddItem() {
         onEndTimeChange={(time: Date) => setEndTime(time)}
       />
     </KeyboardAvoidingView>
+    
   );
 }
 

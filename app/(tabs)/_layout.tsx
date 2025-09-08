@@ -35,7 +35,9 @@ export default function TabLayout() {
       />
       <Tabs.Screen
         name="addItem"
+
         options={{
+
           title: 'Add',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'add-circle' : 'add-circle-outline'} size={28} color={color} />
@@ -43,9 +45,18 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="account"
+        name="chat"
         options={{
-          title: 'Account',
+          title: 'Chat',
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons name={focused ? 'chatbubble' : 'chatbubble-outline'} size={24} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
           tabBarIcon: ({ color, focused }) => (
             <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
           ),

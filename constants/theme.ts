@@ -77,6 +77,14 @@ export const SPACING = {
   xl: 28,
   xxl: 40,
 };
+export const SIZES = {
+  xs: 4,
+  sm: 8,
+  md: 12,
+  lg: 20,
+  xl: 28,
+  xxl: 40,
+}
 
 export const SHADOW = {
   card: {

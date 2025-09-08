@@ -1,8 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList, Dimensions, ScrollView } from 'react-native';
 import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { getCurrentUser, getLocation, logout } from '../../lib/appwrite';
-import { COLORS } from '../../constants/theme';
+import { COLORS, SPACING } from '../../constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SearchBar from '@/components/SearchBar';
 import { useLocalSearchParams } from 'expo-router';
@@ -12,6 +12,7 @@ import Filter from '@/components/Filter';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { CreateItemData, Item } from '@/type';
+import ItemCard from '@/components/ItemCard';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,13 +23,11 @@ export default function Home() {
     params: { category, query },
     skip: !category && !query
   });
-  console.log('data', data as unknown as CreateItemData[]);
-
   useEffect(() => {
     refetch({ category, query });
   }, [category, query]);
 
-    const [location, setLocation] = useState<Location.LocationObject | null>(null);
+    const [location, setLocation] = useState<string | null>(null);
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
   
     useEffect(() => {
@@ -41,8 +40,9 @@ export default function Home() {
         }
   
         let location = await Location.getCurrentPositionAsync({});
-        setLocation(location);
-      }
+        const postalCode = await Location.reverseGeocodeAsync(location.coords);
+        setLocation(postalCode[0].postalCode);
+        }
   
       getCurrentLocation();
     }, []);
@@ -50,14 +50,8 @@ export default function Home() {
   
   return (
     <SafeAreaView style={styles.container}>
-      <FlatList
-        data={data as unknown as CreateItemData[]}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-        ListHeaderComponent={
-          <View style={styles.header}>
-            {/* Search Section */}
-            <View style={styles.searchSection}>
+      <View style={styles.header}>
+      <View style={styles.searchSection}>
               <SearchBar />
             </View>
 
@@ -65,8 +59,17 @@ export default function Home() {
             <View style={styles.filterSection}>
               <Filter />
             </View>
-            
-            {/* Section Header */}
+      </View>
+      <FlatList
+        data={data as unknown as CreateItemData[]}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+        ListHeaderComponent={
+          <View style={styles.header}>
+            {/* Search Section */}
+  
+            {/* Non Sticky Header. this start should be stay in place at top */}
+          <View style={styles.stickyHeader}>
             <View style={styles.sectionHeader}>
               <View>
                 <Text style={styles.sectionTitle}>Today's Pick</Text>
@@ -74,17 +77,40 @@ export default function Home() {
               </View>
               <View style={styles.locationRow}>
                 <Ionicons name="location" size={20} color={COLORS.accent} />
-                  <Text style={styles.locationText}>45409</Text>
-                </View>
+                <Text style={styles.locationText}>{location}</Text>
+              </View>
             </View>
           </View>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.itemCard}>
-            {/* Your item card content will go here */}
-            <Text>Item Card</Text>
+            
+
           </View>
-        )}
+        }
+        
+        // StickyHeaderComponent={() => (
+        //   <View style={styles.stickyHeader}>
+        //     <View style={styles.sectionHeader}>
+        //       <View>
+        //         <Text style={styles.sectionTitle}>Today's Pick</Text>
+        //         <Text style={styles.sectionSubtitle}>{data?.length || 0} Freebies found</Text>
+        //       </View>
+        //       <View style={styles.locationRow}>
+        //         <Ionicons name="location" size={20} color={COLORS.accent} />
+        //         <Text style={styles.locationText}>{location}</Text>
+        //       </View>
+        //     </View>
+        //   </View>
+        // )}
+        renderItem={({ item, index }) => {
+          return (
+            <>
+            
+            <View style={[styles.itemCard, index % 2 === 0 ? { marginRight: SPACING.sm } : { marginLeft: SPACING.sm }]}>
+              <ItemCard item={item} />
+            </View>
+            </>
+          )
+          }
+        }
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <View style={styles.emptyIconContainer}>
@@ -97,7 +123,8 @@ export default function Home() {
 
           </View>
         }
-        numColumns={1}
+      
+        numColumns={2}
       />
     </SafeAreaView>
   );
@@ -109,12 +136,12 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
   },
   content: {
-    paddingHorizontal: 20,
     paddingBottom: 32,
   },
   header: {
-    gap: 10,
-    marginBottom: 8,
+    gap: 1,
+    marginBottom: 0,
+    paddingHorizontal: SPACING.md,
   },
   
   
@@ -172,17 +199,21 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
 
+  // Sticky Header
+  stickyHeader: {
+    backgroundColor: COLORS.background,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+    paddingHorizontal: SPACING.md,
+  },
+
   // Item Cards
   itemCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    flex: 1,
+    width: '50%',  // Slightly less than 50% to account for spacing
+    marginBottom: SPACING.sm,
   },
 
   // Empty State

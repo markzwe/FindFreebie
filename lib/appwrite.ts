@@ -154,7 +154,7 @@ export const createUser = async (name: string, email: string) => {
                 accountId: user.$id,
                 name,
                 email,
-                avatar: avatarUrl.toString(),
+                avatar: avatarUrl,
             }
         });
         
@@ -248,7 +248,7 @@ export async function getItems({category, query}: {category?: string, query?: st
         const queries: string[] = [];
         
         // Fixed: Use consistent field name
-        if (category) queries.push(Query.equal("category", category));
+        if (category) queries.push(Query.equal("category", [category]));
         
         // Fixed: Search in title field instead of name
         if (query) queries.push(Query.search("title", query));
@@ -263,7 +263,7 @@ export async function getItems({category, query}: {category?: string, query?: st
         const processedItems = items.rows.map(item => ({
             ...item,
             eventDate: new Date(item.eventDate),
-            location: JSON.stringify(item.location),
+            location: item.location,
             startTime: item.startTime ? new Date(item.startTime) : undefined,
             endTime: item.endTime ? new Date(item.endTime) : undefined,
         }));

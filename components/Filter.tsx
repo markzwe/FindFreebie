@@ -3,17 +3,12 @@ import React, { useState } from 'react'
 import { Category } from '@/type'
 import { router, useLocalSearchParams } from 'expo-router'
 import { COLORS } from '@/constants/theme';
+import { filerDataTypes } from '@/constants';
 
 export default function Filter() {
 
   const searchParams = useLocalSearchParams<{category?: string}>();
-  const [active, setActive] = useState(searchParams.category || "")
-
-  const filterData = [
-    {name: 'All', id: 'all'},
-    {name: 'Food', id: 'Food'},
-    {name: 'Items', id: 'Items'},
-  ]
+  const [active, setActive] = useState(searchParams.category || "all")
 
   const handlePress = (id: string) => {
     // Update local state to show which button is active
@@ -31,7 +26,7 @@ export default function Filter() {
 
   return (
     <View style={styles.container}>
-      {filterData.map((item) => (
+      {filerDataTypes.map((item) => (
         <TouchableOpacity
          key = {item.id}
          style = {[

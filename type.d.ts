@@ -33,7 +33,7 @@ export interface CoordinatesType {
     coordinates: {
         latitude: number;
         longitude: number;
-    };
+    }
 }
 
 export interface AddressType {
@@ -71,4 +71,9 @@ interface DescriptionModalProps {
     description: string;
     setDescription: (description: string) => void;
     isSharing: boolean;
+}
+interface ItemViewDetailModalProps {
+    item: CreateItemData;
+    isVisible: boolean;
+    onClose: () => void;
 }

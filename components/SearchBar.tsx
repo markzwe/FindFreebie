@@ -1,3 +1,4 @@
+import { SPACING } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { router, useLocalSearchParams } from 'expo-router';
 import React from 'react';
@@ -54,7 +55,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 50,
     paddingHorizontal: 3,
-    marginBottom: 16,
+    marginBottom: 10,
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -78,7 +79,7 @@ const styles = StyleSheet.create({
   },
 
   searchButton: {
-    padding: 12,
+    paddingHorizontal: SPACING.md,
     borderRadius: 12,
     marginRight: 2,
     shadowColor: '#007AFF',
