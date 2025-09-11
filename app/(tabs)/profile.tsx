@@ -13,32 +13,11 @@ import { getCurrentUser, getUserFromDatabase, logout } from "@/lib/appwrite";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { COLORS, SHADOW, SIZES } from "@/constants/theme";
 import { Image } from "expo-image";
-import { useAuthStore } from "@/store/auth.store";
 import { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-const STATS = [
-  { id: '1', label: 'Items Found', value: '24', icon: 'gift-outline' },
-  { id: '2', label: 'Items Shared', value: '12', icon: 'share-social-outline' },
-  { id: '3', label: 'Favorites', value: '8', icon: 'heart-outline' },
-];
-
-const ACTIONS = [
-  { id: '1', title: 'My Listings', icon: 'list-outline', color: COLORS.accent },
-  { id: '2', title: 'Saved Items', icon: 'bookmark-outline', color: COLORS.accent },
-  { id: '3', title: 'Messages', icon: 'chatbubble-ellipses-outline', color: '#FF9F43' },
-];
-
-const SETTINGS = [
-  { id: '1', title: 'Account Settings', icon: 'settings-outline' },
-  { id: '2', title: 'Notification Settings', icon: 'notifications-outline' },
-  { id: '3', title: 'Help & Support', icon: 'help-circle-outline' },
-  { id: '4', title: 'About', icon: 'information-circle-outline' },
-];
+import { ACTIONS, SETTINGS, STATS } from "@/constants";
 
 const Profile = () => {
-  const { user } = useAuthStore();
-
   const [userDB, setUserDB] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -111,6 +90,15 @@ const Profile = () => {
           <Text style={[styles.settingText, styles.logoutText]}>Logout</Text>
         </View>
       </TouchableOpacity>
+      <TouchableOpacity 
+        style={[styles.settingItem, styles.logoutButton]} 
+        onPress={handleLogout}
+      >
+        <View style={styles.settingLeft}>
+          <MaterialCommunityIcons name="delete" size={24} color="#EF4444" />
+          <Text style={[styles.settingText, styles.logoutText]}>Delete Account</Text>
+        </View>
+      </TouchableOpacity>
     </View>
   );
 
@@ -136,8 +124,8 @@ const Profile = () => {
                   <Ionicons name="camera" size={18} color="#fff" />
                 </TouchableOpacity>
               </View>
-              <Text style={styles.userName}>{user?.name || 'Guest User'}</Text>
-              <Text style={styles.userEmail}>{user?.email || 'guest@example.com'}</Text>
+              <Text style={styles.userName}>{userDB?.name || 'Guest User'}</Text>
+              <Text style={styles.userEmail}>{userDB?.email || 'guest@example.com'}</Text>
             </View>
           </View>
 
@@ -163,7 +151,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     backgroundColor: COLORS.background,
-    paddingBottom: 40, // Add some bottom padding for better scrolling
+    paddingBottom: 80, // Add some bottom padding for better scrolling
   },
   header: {
     height: 280,

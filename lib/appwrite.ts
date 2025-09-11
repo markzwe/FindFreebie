@@ -15,6 +15,7 @@ export const appwriteConfig = {
     imagesTableId: process.env.EXPO_PUBLIC_APPWRITE_IMAGES_TABLE_ID,
     userTableId: process.env.EXPO_PUBLIC_APPWRITE_USER_TABLE_ID,
     itemsTableId: process.env.EXPO_PUBLIC_APPWRITE_ITEMS_TABLE_ID,
+    chatRoomTableId: process.env.EXPO_PUBLIC_APPWRITE_CHAT_ROOM_TABLE_ID,
     bucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID,
 };
 export const client = new Client();
@@ -273,5 +274,28 @@ export async function getItems({category, query}: {category?: string, query?: st
     } catch (error) {
         console.log("Error getting items:", error);
         return [];
+    }
+}
+
+export async function createChatRoom() {
+    try {
+        const user = await getCurrentUser();
+        if (!user) {
+            throw new Error('User not authenticated');
+        }
+        console.log("User authenticated:", user);
+        const userIdfromDb = await getUserFromDatabase();
+        await tablesDB.createRow({
+            databaseId: appwriteConfig.databaseId!,
+            tableId: appwriteConfig.chatRoomTableId!,
+            rowId: ID.unique(),
+            data: {
+                user: userIdfromDb?.$id,
+                
+            }
+        })      
+        
+    } catch (error) {
+        console.log("Error creating chat room:", error);
     }
 }

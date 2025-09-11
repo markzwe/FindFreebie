@@ -90,6 +90,7 @@ export default function ItemViewDetailModal({item, isVisible, onClose}: ItemView
       transparent={true}
       visible={isVisible}
       onRequestClose={onClose}
+      style={[styles.container]}
     >
       <SafeAreaView style={styles.container}>
         {/* Header */}
@@ -208,7 +209,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
-    position: 'relative',
+
   },
   content: {
     flex: 1,

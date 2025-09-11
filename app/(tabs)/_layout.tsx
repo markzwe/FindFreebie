@@ -1,9 +1,12 @@
-import { Tabs } from 'expo-router';
+import { Tabs, useSegments } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS } from '@/constants/theme';
 import { View, StyleSheet } from 'react-native';
 
 export default function TabLayout() {
+
+  const segment = useSegments();
+  const hideTabBar = [...segment].includes("ChatScreen");
   return (
     <View style={styles.container}>
       <Tabs
@@ -19,10 +22,14 @@ export default function TabLayout() {
             right: 0,
             height: 80,
             elevation: 0,
+            display: hideTabBar ? 'none' : 'flex',
           },
           tabBarBackground: () => (
             <View style={styles.tabBarBackground} />
           ),
+          animation: "shift",
+          
+          tabBarHideOnKeyboard: true,
         }}>
       <Tabs.Screen
         name="index"
@@ -45,7 +52,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="chat"
+        name="(chats)"
         options={{
           title: 'Chat',
           tabBarIcon: ({ color, focused }) => (

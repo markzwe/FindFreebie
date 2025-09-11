@@ -18,7 +18,7 @@ export interface Category {
     name: string;
 }
 
-export interface Item extends Models.Document {
+export interface Item extends Models.Row {
     title: string;
     description?: string;
     location: CoordinatesType; // Changed to string to match CreateItemData
@@ -76,4 +76,22 @@ interface ItemViewDetailModalProps {
     item: CreateItemData;
     isVisible: boolean;
     onClose: () => void;
+}
+
+interface Chatroom extends Models.Row{
+    item: string;
+    buyer: string;
+    seller: string;
+    messages: string[];
+    
+    
+}
+interface Message extends Models.Row {
+    $id: string;
+    $createdAt: string;
+    $updatedAt: string;
+    content: string;
+    senderId: string;
+    chatroomId: string;
+    createdAt: string;
 }
