@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Modal, Dimensions, Platform }
 import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
 import { COLORS, SPACING, RADIUS, FONT } from '@/constants/theme';
-import { MaterialIcons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 interface DistanceChooserProps {
   selectedDistance: number;
@@ -23,13 +23,14 @@ export const DistanceChooser: React.FC<DistanceChooserProps> = ({
   const [isSliding, setIsSliding] = useState(false);
 
   const distances = [
-    { label: '100m', value: 0.1 },
-    { label: '200m', value: 0.2 },
-    { label: '500m', value: 0.5 },
-    { label: '1km', value: 1 },
-    { label: '2km', value: 2 },
-    { label: '5km', value: 5 },
-    { label: '10km', value: 10 },
+    { label: 'All', value: 0 },
+    { label: '1 mi', value: 1 },
+    { label: '5 mi', value: 5 },
+    { label: '10 mi', value: 10 },
+    { label: '25 mi', value: 25 },
+    { label: '50 mi', value: 50 },
+    { label: '100 mi', value: 100 },
+    { label: '200 mi', value: 200 },
   ];
 
   // Update local state when selectedDistance prop changes
@@ -49,10 +50,7 @@ export const DistanceChooser: React.FC<DistanceChooserProps> = ({
   };
 
   const handleSlidingComplete = (value: number) => {
-    const step = getClosestStep(value);
-    setSliderValue(step);
-    onDistanceChange(step);
-    setIsSliding(false);
+    // This is now handled directly in the Slider's onSlidingComplete
   };
 
   const handleApply = () => {
@@ -60,7 +58,9 @@ export const DistanceChooser: React.FC<DistanceChooserProps> = ({
     setIsModalVisible(false);
   };
 
-  const currentDistance = distances.find(d => d.value === sliderValue)?.label || '1km';
+  const currentDistance = sliderValue === 0 ? 'All' : 
+    distances.find(d => d.value === sliderValue)?.label || 
+    `${Math.round(sliderValue)} mi`;
 
   if (!visible) return null;
 
@@ -71,8 +71,8 @@ export const DistanceChooser: React.FC<DistanceChooserProps> = ({
         onPress={() => setIsModalVisible(true)}
         activeOpacity={0.8}
       >
-        <MaterialIcons name="location-on" size={18} color={COLORS.accent} />
         <Text style={styles.distanceText}>{currentDistance}</Text>
+        <Ionicons name="chevron-down" size={18} color={COLORS.accent} />
       </TouchableOpacity>
 
       <Modal
@@ -99,22 +99,30 @@ export const DistanceChooser: React.FC<DistanceChooserProps> = ({
               </Text>
               <Slider
                 style={styles.slider}
-                minimumValue={0.1}
-                maximumValue={10}
+                minimumValue={0}
+                maximumValue={200}
                 minimumTrackTintColor={COLORS.accent}
                 maximumTrackTintColor={COLORS.border}
                 thumbTintColor={COLORS.accent}
-                step={0.1}
+                step={1}
+
                 value={sliderValue}
                 onValueChange={handleValueChange}
                 onSlidingStart={() => setIsSliding(true)}
-                onSlidingComplete={handleSlidingComplete}
+                onSlidingComplete={(value) => {
+                  // Snap to 0 for 'All' when close to the left edge
+                  const step = value < 0.5 ? 0 : getClosestStep(value);
+                  setSliderValue(step);
+                  onDistanceChange(step);
+                  setIsSliding(false);
+                }}
               />
-              <View style={styles.distanceMarkers}>
-                <Text style={styles.markerText}>100m</Text>
-                <Text style={styles.markerText}>5km</Text>
-                <Text style={styles.markerText}>10km</Text>
-              </View>
+            </View>
+            
+            <View style={styles.distanceMarkers}>
+            
+                  <Text style={styles.markerText}>All</Text>
+             
             </View>
 
             <TouchableOpacity 
@@ -136,69 +144,81 @@ const styles = StyleSheet.create({
   distanceButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    height: 40,
-    minWidth: 100,
+    backgroundColor: COLORS.accent + '15',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    minWidth: 70,
+    justifyContent: 'center',
   },
   distanceText: {
-    color: COLORS.text,
-    fontSize: FONT.size.md,
+    color: COLORS.accent,
+    fontSize: 13,
+    fontWeight: '600',
+    marginRight: 4,
     fontFamily: FONT.family.medium,
-    marginLeft: SPACING.xs,
   },
 
   // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.lg,
   },
   modalContent: {
     backgroundColor: COLORS.background,
-    borderTopLeftRadius: RADIUS.xl,
-    borderTopRightRadius: RADIUS.xl,
+    borderRadius: RADIUS.xl,
     padding: SPACING.lg,
-    paddingBottom: SPACING.xl,
+    width: '100%',
+    maxWidth: 400,
+    maxHeight: '80%',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    overflow: 'hidden',
+    margin: SPACING.lg,
   },
   modalHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: SPACING.lg,
+    paddingBottom: SPACING.md,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
   },
   modalTitle: {
-    fontSize: FONT.size.lg,
+    fontSize: FONT.size.sm,
     fontFamily: FONT.family.bold,
     color: COLORS.text,
   },
   closeButton: {
-    padding: SPACING.xs,
+    padding: SPACING.md,
   },
 
   // Slider Styles
   sliderContainer: {
-    paddingVertical: SPACING.lg,
+    width: '100%',
+    marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.sm,
   },
   distanceLabel: {
-    fontSize: FONT.size.xl,
+    fontSize: FONT.size.md,
     fontFamily: FONT.family.bold,
     color: COLORS.text,
     textAlign: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
   },
   slider: {
     width: '100%',
-    height: 40,
+    height: 1,
   },
   distanceMarkers: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: SPACING.xs,
+    paddingLeft: SPACING.md,
+    
   },
   markerText: {
     color: COLORS.textMuted,
@@ -209,9 +229,9 @@ const styles = StyleSheet.create({
   applyButton: {
     backgroundColor: COLORS.accent,
     borderRadius: RADIUS.md,
-    padding: SPACING.md,
+    padding: SPACING.sm,
     alignItems: 'center',
-    marginTop: SPACING.lg,
+    marginTop: SPACING.sm,
   },
   applyButtonText: {
     color: COLORS.white,

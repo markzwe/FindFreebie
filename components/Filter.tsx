@@ -1,9 +1,9 @@
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native'
-import React, { useState } from 'react'
-import { Category } from '@/type'
-import { router, useLocalSearchParams } from 'expo-router'
+import { View, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
 import { COLORS } from '@/constants/theme';
 import { filerDataTypes } from '@/constants';
+import CustomPicker from './CustomPicker';
 
 export default function Filter() {
 
@@ -26,64 +26,20 @@ export default function Filter() {
 
   return (
     <View style={styles.container}>
-      {filerDataTypes.map((item) => (
-        <TouchableOpacity
-         key = {item.id}
-         style = {[
-           styles.chip,
-           active === item.id && styles.activeChip
-         ]}
-         onPress = {() => handlePress(item.id)}
-         >
-           <Text style={[
-             styles.chipText,
-             active === item.id && styles.activeChipText
-           ]}>
-              {item.name}
-            </Text>
-        </TouchableOpacity>
-      ))}
+      <CustomPicker
+        items={filerDataTypes}
+        selectedValue={active}
+        onValueChange={handlePress}
+        placeholder="Select a category"
+      />
     </View>
-)
+  );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingBottom: 12,
-    justifyContent: 'space-between'
-  },
-  chip: {
-    paddingHorizontal: Dimensions.get('window').width * 0.09,
-    paddingVertical: 5,
-    borderRadius: 5,
-    backgroundColor: '#F8F9FA',    
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-  activeChip: {
-    backgroundColor: COLORS.accent,
-    borderColor: COLORS.accent,
-    shadowColor: COLORS.accent,
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  chipText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#495057',
-    textAlign: 'center',
-  },
-  activeChipText: {
-    color: COLORS.background,
-    fontWeight: '600',
-  },
+    width: 150, // Fixed width for compact size
+    height: 44, // Match the height of the location container
+    justifyContent: 'center',
+  } as const,
 })

@@ -3,7 +3,7 @@ import Slider from '@react-native-community/slider';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { router } from 'expo-router';
 import { getCurrentUser, getLocation, logout } from '../../lib/appwrite';
-import { COLORS, SPACING } from '../../constants/theme';
+import { COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SearchBar from '@/components/SearchBar';
 import { useLocalSearchParams } from 'expo-router';
@@ -81,8 +81,8 @@ export default function Home() {
     
     return items.filter(item => {
       // Use coordinates from location object if available, otherwise use direct props
-      const itemLat = item.location?.coordinates?.latitude ?? item.latitude;
-      const itemLng = item.location?.coordinates?.longitude ?? item.longitude;
+      const itemLat = item.latitude ?? item.latitude;
+      const itemLng = item.longitude ?? item.longitude;
       
       if (itemLat === undefined || itemLng === undefined) return false;
       
@@ -106,8 +106,8 @@ export default function Home() {
       const response = await getItems({});
       const items = (response as unknown as any[]).map((item) => ({
         ...item,
-        latitude: item.location?.coordinates?.latitude,
-        longitude: item.location?.coordinates?.longitude
+        latitude: item.latitude,
+        longitude: item.longitude
       })) as Item[];
       
       refetch({ category, query });
@@ -129,8 +129,8 @@ export default function Home() {
     if (data && location) {
       const items = (data as unknown as any[]).map((item) => ({
         ...item,
-        latitude: item.location?.coordinates?.latitude,
-        longitude: item.location?.coordinates?.longitude
+        latitude: item.latitude,
+        longitude: item.longitude
       })) as Item[];
       const filtered = filterItemsByDistance(items, location, distance);
       setFilteredData(filtered);
@@ -152,6 +152,12 @@ export default function Home() {
             <View style={styles.filterSection}>
               <View style={styles.filterRow}>
                 <Filter />
+         
+              <View style={styles.locationContainer}>
+                <View style={styles.locationRow}>
+                  <Ionicons name="location" size={20} color={COLORS.accent} />
+                  <Text style={styles.locationText}>{locationText}</Text>
+                </View>
                 <View style={styles.distanceContainer}>
                   <DistanceChooser 
                     selectedDistance={distance}
@@ -160,6 +166,7 @@ export default function Home() {
                     onClose={() => {}}
                   />
                 </View>
+              </View>
               </View>
           </View>
       </View>
@@ -190,10 +197,7 @@ export default function Home() {
           </View>
         </View>
               </View>
-              <View style={styles.locationRow}>
-                <Ionicons name="location" size={20} color={COLORS.accent} />
-                <Text style={styles.locationText}>{locationText}</Text>
-              </View>
+        
             </View>
           </View>
             
@@ -295,15 +299,31 @@ const styles = StyleSheet.create({
   
   // Location Section
 
+  locationContainer: {
+    flex: 1,
+    marginLeft: SPACING.sm,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.lg,
+    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    height: 44, // Match the height of the Filter component
+  },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+    paddingLeft: 4,
   },
   locationText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: COLORS.accent,
-    marginRight: 8,
+    color: COLORS.text,
+    marginLeft: 6,
+    fontFamily: FONT.family.medium,
   },
 
   // Search and Filter
@@ -316,8 +336,8 @@ const styles = StyleSheet.create({
   filterRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flexWrap: 'wrap',
     gap: SPACING.sm,
+    height: 44, // Explicit height for the row
   },
 
   // Section Header
@@ -360,8 +380,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   distanceContainer: {
-    marginLeft: SPACING.md,
-    marginTop: SPACING.xs,
+    marginLeft: 'auto',
   },
   distanceButton: {
     flexDirection: 'row',

@@ -145,7 +145,8 @@ export default function AddItem() {
       title: title.trim(),
       address: JSON.stringify(address),
       description: description.trim() || undefined,
-      location: location!,
+      latitude: location?.coordinates?.latitude,
+      longitude: location?.coordinates?.longitude,
       category : category, // This will be mapped to 'category' in the database
       image: selectedImage,
       eventDate: date,
