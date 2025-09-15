@@ -201,7 +201,8 @@ async function uploadImageToStorage(imageUrl: string) {
 export async function addItems({
     title,
     description,
-    location,
+    latitude,
+    longitude,
     category,
     image,
     eventDate,
@@ -228,7 +229,8 @@ export async function addItems({
                 user: userIdfromDb?.$id,
                 title,
                 description: description || undefined,
-                location: JSON.stringify(location),
+                latitude,
+                longitude,
                 category,
                 image: uploadedImage,
                 address: address,
@@ -247,7 +249,7 @@ export async function addItems({
 }
 
 // Fixed getItems function
-export async function getItems({category, query}: {category?: string, query?: string}) {
+export async function getItems({category, query, distance}: {category?: string, query?: string, distance?: number}) {
     try {
         const queries: string[] = [];
         

@@ -28,13 +28,12 @@ export interface Item {
     title: string;
     $id: string;
     description?: string;
-    location: CoordinatesType;
     category: string;
     image: string;
     eventDate: Date;
     startTime?: Date;
-    latitude?: number;
-    longitude?: number;
+    latitude?: float;
+    longitude?: float;
     endTime?: Date;
     address: string;
     user: string; // User ID of the item creator
@@ -42,8 +41,8 @@ export interface Item {
 
 export interface CoordinatesType {
     coordinates: {
-        latitude: number;
-        longitude: number;
+        latitude: float;
+        longitude: float;
     }
 }
 
