@@ -1,10 +1,10 @@
-import { Account, Client, OAuthProvider, Databases, Avatars, ID, TablesDB, Query, Locale, Storage } from "react-native-appwrite";
+import { Account, Client, OAuthProvider, Databases, Avatars, ID, TablesDB, Query, Locale, Storage, Models } from "react-native-appwrite";
 
 import * as Linking from "expo-linking";
 import { openAuthSessionAsync } from "expo-web-browser";
 import { makeRedirectUri } from 'expo-auth-session'
 import * as WebBrowser from 'expo-web-browser';
-import { Item, CreateItemData, CoordinatesType } from "@/type";
+import { Item, CoordinatesType, Message, Chatroom, ChatroomResponse, MessageResponse } from "@/type";
 
 export const appwriteConfig = {
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
@@ -17,6 +17,7 @@ export const appwriteConfig = {
     itemsTableId: process.env.EXPO_PUBLIC_APPWRITE_ITEMS_TABLE_ID,
     chatRoomTableId: process.env.EXPO_PUBLIC_APPWRITE_CHAT_ROOM_TABLE_ID,
     bucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID,
+    messagesTableId: process.env.EXPO_PUBLIC_APPWRITE_MESSAGES_TABLE_ID,
 };
 export const client = new Client();
 client.setEndpoint(appwriteConfig.endpoint!);
@@ -97,16 +98,17 @@ export async function getCurrentUser() {
     }
 }
 
-export async function getUserFromDatabase() {
+export async function getUserFromDatabase(userId?: string) {
     try {
         // First check if user has an active session
         const accountUser = await getCurrentUser();
         if (!accountUser) return null;
+
         
         const userQuery = await tablesDB.listRows({
             databaseId: appwriteConfig.databaseId!,
             tableId: appwriteConfig.userTableId!,
-            queries: [Query.equal("accountId", accountUser.$id)]
+            queries: userId ? [Query.equal("$id", userId)] : [Query.equal("accountId", accountUser.$id)]
         });
         
         if (userQuery.rows.length > 0) {
@@ -204,8 +206,9 @@ export async function addItems({
     image,
     eventDate,
     startTime,
-    endTime
-}: CreateItemData) {
+    endTime,
+    address
+}: Item) {
     try {
         const user = await getCurrentUser();
         if (!user) {
@@ -228,7 +231,7 @@ export async function addItems({
                 location: JSON.stringify(location),
                 category,
                 image: uploadedImage,
-                // Convert dates to ISO strings for database storage
+                address: address,
                 eventDate: eventDate.toISOString(),
                 startTime: startTime?.toISOString(),
                 endTime: endTime?.toISOString(),
@@ -251,9 +254,9 @@ export async function getItems({category, query}: {category?: string, query?: st
         // Fixed: Use consistent field name
         if (category) queries.push(Query.equal("category", [category]));
         
-        // Fixed: Search in title field instead of name
-        if (query) queries.push(Query.search("title", query));
-
+        // Fixed: Search in title field instead of name\
+        if (query) queries.push(Query.contains("title", query));
+        console.log("Query:", queries);
         const items = await tablesDB.listRows({
             databaseId: appwriteConfig.databaseId!,
             tableId: appwriteConfig.itemsTableId!,
@@ -277,25 +280,86 @@ export async function getItems({category, query}: {category?: string, query?: st
     }
 }
 
-export async function createChatRoom() {
+export async function createChatRoom({itemId, sellerId, buyerId}: {itemId: string, sellerId: string, buyerId: string}) {
     try {
         const user = await getCurrentUser();
         if (!user) {
             throw new Error('User not authenticated');
         }
-        console.log("User authenticated:", user);
-        const userIdfromDb = await getUserFromDatabase();
+        const Id = ID.unique();
         await tablesDB.createRow({
             databaseId: appwriteConfig.databaseId!,
             tableId: appwriteConfig.chatRoomTableId!,
-            rowId: ID.unique(),
+            rowId: Id,
             data: {
-                user: userIdfromDb?.$id,
-                
+                // user: userIdfromDb?.$id,
+                item: itemId,
+                seller: sellerId,
+                buyer: buyerId
             }
-        })      
+        })  
+        return Id;    
         
     } catch (error) {
         console.log("Error creating chat room:", error);
     }
 }
+
+export async function getChatRooms(): Promise<ChatroomResponse> {
+    try {
+        const user = await getUserFromDatabase();
+        const userId = user?.$id;
+        
+        if (!userId) {
+            return { rows: [], total: 0 };
+        }
+        const response = await tablesDB.listRows<Chatroom>({
+            databaseId: appwriteConfig.databaseId!,
+            tableId: appwriteConfig.chatRoomTableId!,
+            queries: [Query.or([
+                Query.equal("seller", [userId]),
+                Query.equal("buyer", [userId])
+            ])],
+        }) as unknown as ChatroomResponse;
+        return response || { rows: [], total: 0 };
+    } catch (error) {
+        console.error('Error fetching chat rooms:', error);
+        return { rows: [], total: 0 };
+    }
+}
+
+export async function addMessage(message: { content: string; senderId: string; chatroomId: string }) {
+    await tablesDB.createRow({
+        databaseId: appwriteConfig.databaseId!,
+        tableId: appwriteConfig.messagesTableId!,
+        rowId: ID.unique(),
+        data: {
+            content: message.content,
+            senderId: message.senderId,
+            chatroomId: message.chatroomId
+        }
+    });
+}
+export async function subscribeToMessages(chatroomId: string) {
+    return await tablesDB.updateRow({
+        databaseId: appwriteConfig.databaseId!,
+        tableId: appwriteConfig.chatRoomTableId!,
+        rowId: chatroomId,
+        data: { $updatedAt: new Date().toISOString() }
+    });
+}
+export async function getMessagesForChatroom(chatroomId: string) {
+    const response = await tablesDB.listRows({
+        databaseId: appwriteConfig.databaseId!,
+        tableId: appwriteConfig.messagesTableId!,
+        queries: [
+            Query.equal("chatroomId", [chatroomId]), 
+            Query.orderDesc("$createdAt"), // Oldest first
+            Query.limit(100)
+        ],
+    });
+    return response as unknown as MessageResponse;
+}
+export const chatroomChannel = `databases.${appwriteConfig.databaseId}.tables.${appwriteConfig.chatRoomTableId!}.rows.`;
+
+

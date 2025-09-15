@@ -1,19 +1,36 @@
 import { View, Text, StyleSheet, ScrollView } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { Modal } from 'react-native'
-import { ItemViewDetailModalProps, CoordinatesType } from '@/type'
+import { Item, CoordinatesType, User, AddressType } from '@/type'
 import { Image } from 'expo-image'
 import { SPACING, COLORS, RADIUS, FONT } from '@/constants/theme';
 import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'
 import MapView from './MapView'
-import { useGeocodingStore } from '@/store/useGeocodingStore';
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { account, createChatRoom, getUserFromDatabase } from '@/lib/appwrite'
+import { router } from 'expo-router'
 
-export default function ItemViewDetailModal({item, isVisible, onClose}: ItemViewDetailModalProps) {
-  const [address, setAddress] = useState<string>('');
-  const { getAddressFromCoordinates } = useGeocodingStore();
+interface ItemViewDetailModalProps {
+  item: Item;
+  isVisible: boolean;
+  onClose: () => void;
+}
+
+export default function ItemViewDetailModal({ item, isVisible, onClose }: ItemViewDetailModalProps) {
+  const [user, setUser] = useState<User | null>(null);
+  const [isSellerUser, setIsSellerUser] = useState<boolean>();
+
+  const [seller, setSeller] = useState<User>({} as User);
   
+  let address = JSON.parse(item.address);
+  useEffect(() => {
+    const fetchUser = async () => {
+      const userData = await getUserFromDatabase();
+      setUser(userData as unknown as User);
+    };
+    fetchUser();
+  }, []);
   const parseLocationCoordinates = (locationData: any): CoordinatesType | null => {
     if (!locationData) return null;
     
@@ -47,23 +64,19 @@ export default function ItemViewDetailModal({item, isVisible, onClose}: ItemView
     }
   };
   
-
+  
   const locationCoordinates = parseLocationCoordinates(item.location);
   const hasValidLocation = !!locationCoordinates;
-
+  
   useEffect(() => {
-    const fetchAddress = async () => {
-      if (!locationCoordinates) return;
-      
-      const address = await getAddressFromCoordinates(locationCoordinates);
-      if (address) {
-        setAddress(address.name);
-      }
-    };
-
-    fetchAddress();
-  }, [locationCoordinates, getAddressFromCoordinates]);
-
+    fetchSeller();
+  }, []);
+  const fetchSeller = async () => {
+    const sellerData = await getUserFromDatabase(item.user);
+    setSeller(sellerData as unknown as User);
+    setIsSellerUser(user?.$id === item.user);
+  };
+  
   const formatDate = (date: Date | string) => {
     const dateObj = typeof date === 'string' ? new Date(date) : date;
     return dateObj.toLocaleDateString('en-US', {
@@ -73,7 +86,7 @@ export default function ItemViewDetailModal({item, isVisible, onClose}: ItemView
       day: 'numeric'
     });
   };
-
+  
   const formatTime = (time: Date | string | undefined) => {
     if (!time) return null;
     const timeObj = typeof time === 'string' ? new Date(time) : time;
@@ -84,21 +97,36 @@ export default function ItemViewDetailModal({item, isVisible, onClose}: ItemView
     });
   };
 
+  const handleCreateChatroom = async () => {
+    if (!user) console.log('User not found');
+    else {
+      const chatroomId = await createChatRoom({itemId: item.$id, sellerId: item.user, buyerId: user.$id});
+      onClose();
+      router.replace({
+        pathname: '/(tabs)/(chats)/ChatScreen',
+        params: { chatroomId: chatroomId }
+      });
+    }
+  };
+
+
   return (
+
     <Modal
       animationType="slide"
-      transparent={true}
+      transparent={false}
       visible={isVisible}
       onRequestClose={onClose}
-      style={[styles.container]}
+      presentationStyle="formSheet"
+      style={[styles.container, {paddingTop: 20}]}
     >
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft} />
-          <Text style={styles.headerTitle}>Item Details</Text>
+          <Text style={styles.headerTitle}>Details</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Ionicons name="close" size={24} color={COLORS.white} />
+            <Ionicons name="close" size={24} color={COLORS.accent} />
           </TouchableOpacity>
         </View>
 
@@ -164,6 +192,26 @@ export default function ItemViewDetailModal({item, isVisible, onClose}: ItemView
               )}
             </View>
           </View>
+          {/* Seller */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Posted By</Text>
+              <View style={styles.sellerContainer}>
+                <View style={styles.sellerInfo}>
+                  <Image
+                    source={{ uri: seller.avatar }}
+                    style={styles.sellerImage}
+                  />
+                  <Text style={styles.sellerName}>{seller.name}</Text>
+                </View>
+                {!isSellerUser && (
+                  <TouchableOpacity style={styles.actionButton} onPress={handleCreateChatroom}>
+                    <Ionicons name="chatbubble-outline" size={20} color={COLORS.white} />
+                    <Text style={styles.actionButtonText}>Send Message</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+        
+          </View>
 
           {/* Location */}
           <View style={styles.section}>
@@ -174,7 +222,7 @@ export default function ItemViewDetailModal({item, isVisible, onClose}: ItemView
                 <View style={styles.locationInfo}>
                   <Ionicons name="location-outline" size={20} color={COLORS.accent} />
                   <Text style={styles.locationText}>
-                    {address || `${locationCoordinates.coordinates.latitude.toFixed(6)}, ${locationCoordinates.coordinates.longitude.toFixed(6)}`}
+                    {address.postalCode}
                   </Text>
                 </View>
               </View>
@@ -187,21 +235,9 @@ export default function ItemViewDetailModal({item, isVisible, onClose}: ItemView
           </View>
 
         </ScrollView>
-        <View style={styles.actionsSection}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Ionicons name="chatbubble-outline" size={20} color={COLORS.white} />
-            <Text style={styles.actionButtonText}>Send Message</Text>
-          </TouchableOpacity>
-{/*           
-          {hasValidLocation && (
-            <TouchableOpacity style={styles.actionButtonSecondary}>
-              <Ionicons name="navigate-outline" size={20} color={COLORS.accent} />
-              <Text style={styles.actionButtonTextSecondary}>Directions</Text>
-            </TouchableOpacity>
-          )} */}
-        </View>
       </SafeAreaView>
     </Modal>
+
   )
 }
 
@@ -221,7 +257,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-    paddingBottom: SPACING.md,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.sm,
   },
   headerLeft: {
     width: 40,
@@ -230,17 +267,16 @@ const styles = StyleSheet.create({
     fontSize: FONT.size.lg,
     fontWeight: '700',
     color: COLORS.text,
+    textAlign: 'center',
   },
   closeButton: {
-    backgroundColor: COLORS.accent,
-    borderRadius: 20,
     width: 30,
     height: 30,
     justifyContent: 'center',
     alignItems: 'center',
   },
   scrollContent: {
-    paddingBottom: 120,
+    paddingBottom: 20,
   },
   itemImage: {
     width: '100%',
@@ -279,12 +315,13 @@ const styles = StyleSheet.create({
   },
   section: {
     paddingHorizontal: SPACING.lg,
-    marginTop: SPACING.lg,
+    marginTop: SPACING.lg + 10,
   },
   sectionTitle: {
-    fontSize: FONT.size.lg,
+    fontSize: FONT.size.md,
+    fontStyle: 'italic',
     fontWeight: '600',
-    color: COLORS.text,
+    color: COLORS.textMuted,
     marginBottom: SPACING.md,
   },
   description: {
@@ -321,6 +358,28 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
   },
+  sellerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    width: '100%',
+  },
+  sellerInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    flex: 1,
+  },
+  sellerImage: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.full,
+  },
+  sellerName: {
+    fontSize: FONT.size.md,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
   locationContainer: {
     borderRadius: RADIUS.md,
     overflow: 'hidden',
@@ -355,7 +414,7 @@ const styles = StyleSheet.create({
   },
   actionsSection: {
     position: 'absolute',
-    bottom: 40,
+    bottom: 35,
  
     backgroundColor: COLORS.background,
     paddingHorizontal: SPACING.md,
@@ -369,10 +428,9 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   actionButton: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     backgroundColor: COLORS.accent,
     padding: SPACING.md,
     borderRadius: RADIUS.md,
@@ -399,5 +457,9 @@ const styles = StyleSheet.create({
     fontSize: FONT.size.md,
     color: COLORS.accent,
     fontWeight: '600',
+  },
+  sellerText: {
+    fontSize: FONT.size.md,
+    color: COLORS.text,
   },
 });

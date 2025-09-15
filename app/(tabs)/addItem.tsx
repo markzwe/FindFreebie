@@ -23,11 +23,14 @@ import DateTimePickerModal from "@/components/DateTimePickerModal";
 import DescriptionModal from "@/components/DescriptionModal";
 import MapView from "@/components/MapView";
 import * as Location from 'expo-location';
-import { CoordinatesType, AddressType } from "@/type";
-import { addItems } from "@/lib/appwrite";
+import { CoordinatesType, AddressType, Item } from "@/type";
+import { account, addItems, getUserFromDatabase } from "@/lib/appwrite";
+import { ID } from "react-native-appwrite";
 
 export default function AddItem() {
   const router = useRouter();
+
+  const [user, setUser] = useState<any>(null);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -50,6 +53,13 @@ export default function AddItem() {
     name: "",
     postalCode: ""
   });
+  useEffect(() => {
+    const fetchUser = async () => {
+      const userData = await getUserFromDatabase();
+      setUser(userData);
+    };
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     async function getCurrentLocation() {
@@ -130,21 +140,26 @@ export default function AddItem() {
       console.log("Form validation failed");
       return;
     }
+    const item: Item = {
+      $id: ID.unique(),
+      title: title.trim(),
+      address: JSON.stringify(address),
+      description: description.trim() || undefined,
+      location: location!,
+      category : category, // This will be mapped to 'category' in the database
+      image: selectedImage,
+      eventDate: date,
+      startTime: showTimePicker && startTime ? startTime : undefined,
+      endTime: showTimePicker && endTime ? endTime : undefined,
+      user: user.$id,
+    }
 
     setIsSharing(true);
     
     try {
       // FIXED: Better location handling
       const result = await addItems({
-        title: title.trim(),
-        description: description.trim() || undefined,
-        location: location!,
-        category : category, // This will be mapped to 'category' in the database
-        image: selectedImage,
-        eventDate: date,
-        // FIXED: Only pass times if they're actually set
-        startTime: showTimePicker && startTime ? startTime : undefined,
-        endTime: showTimePicker && endTime ? endTime : undefined,
+        ...item
       });
 
       if (result) {
@@ -159,6 +174,11 @@ export default function AddItem() {
         setStartTime(undefined);
         setEndTime(undefined);
         setShowTimePicker(false);
+        setAddress({
+          name: "",
+          postalCode: ""
+        });
+        setLocation(null);
         
         router.replace("/");
       } else {

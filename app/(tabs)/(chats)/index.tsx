@@ -1,39 +1,107 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import { getUserFromDatabase } from '@/lib/appwrite'
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
-import { COLORS, FONT, SIZES, SPACING } from '@/constants/theme'
-import { Image } from 'expo-image'
-import { Link, router } from 'expo-router'
-import { dummyChatrooms } from '@/lib/data'
-import { Chatroom } from '@/type'
-import { Ionicons } from '@expo/vector-icons'
+import { Link, useRouter } from 'expo-router';
+import { COLORS, SPACING, FONT } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { getChatRooms, tablesDB, appwriteConfig, getUserFromDatabase } from '@/lib/appwrite';
+import { Chatroom } from '@/type';
+import { useAppwrite } from '@/lib/useAppwrite';
 
 export default function Chat() {
- const [userDB, setUserDB] = useState<any>(null);
-   const [loading, setLoading] = useState(true);
- 
-   useEffect(() => {
-     const fetchUserData = async () => {
-       try {
-         const userData = await getUserFromDatabase();
-         setUserDB(userData);
-       } catch (error) {
-         console.error("Error fetching user data:", error);
-       } finally {
-         setLoading(false);
-       }
-     };
- 
-     fetchUserData();
-   }, []);
- 
-   const handleChatroomPress = (chatroom: Chatroom, index: number) => {
+  const router = useRouter();
+  
+  const [chatRooms, setChatRooms] = useState<Array<Chatroom & { 
+    sellerName?: string; 
+    buyerName?: string;
+    otherUserName?: string;
+    itemTitle?: string; 
+    itemImage?: string | null 
+  }>>([]);
+  const [refreshing, setRefreshing] = useState(false);
+  const [userDB, setUserDB] = useState<any>(null);
+  
+  //fetch user data
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const userData = await getUserFromDatabase();
+        setUserDB(userData);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      } 
+    };
+    
+    fetchUserData();
+  }, []);
+  
+  const fetchChatInfo = async (chatroom: Chatroom) => {
+    try {
+      // Get item details
+      const [item, seller, buyer] = await Promise.all([
+        tablesDB.getRow({
+          databaseId: appwriteConfig.databaseId!,
+          tableId: appwriteConfig.itemsTableId!,
+          rowId: chatroom.item
+        }),
+        tablesDB.getRow({
+          databaseId: appwriteConfig.databaseId!,
+          tableId: appwriteConfig.userTableId!,
+          rowId: chatroom.seller
+        }),
+        tablesDB.getRow({
+          databaseId: appwriteConfig.databaseId!,
+          tableId: appwriteConfig.userTableId!,
+          rowId: chatroom.buyer
+        })
+      ]);
+      
+      // Determine if current user is the seller or buyer
+      const isSeller = userDB?.$id === chatroom.seller;
+      const otherUser = isSeller ? buyer : seller;
+      
+      return {
+        ...chatroom,
+        sellerName: seller?.name || 'Seller',
+        buyerName: buyer?.name || 'Buyer',
+        otherUserName: otherUser?.name || (isSeller ? 'Buyer' : 'Seller'),
+        itemTitle: item?.title || 'Item',
+        itemImage: item?.image || null
+      };
+    } catch (error) {
+      console.error('Error fetching chat info:', error);
+      return {
+        ...chatroom,
+        sellerName: 'Seller',
+        itemTitle: 'Item',
+        itemImage: null
+      };
+    }
+  };
+
+  const fetchChatRooms = async () => {
+    try {
+      const response = await getChatRooms();
+      // Fetch additional info for each chat room
+      const chatRoomsWithInfo = await Promise.all(
+        response.rows.map((room: Chatroom) => fetchChatInfo(room))
+      );
+      setChatRooms(chatRoomsWithInfo);
+    } catch (error) {
+      console.error('Error fetching chat rooms:', error);
+      setChatRooms([]);
+    }
+  };
+
+  useEffect(() => {
+    fetchChatRooms();
+  }, []);
+   const handleChatroomPress = (chatroom: Chatroom & { itemImage?: string | null }, index: number) => {
     router.push({
       pathname: "/(tabs)/(chats)/ChatScreen",
       params: {
         chatroomId: chatroom.$id,
         userData: userDB,
+        itemImage: chatroom.itemImage,
        },
     });
    }
@@ -42,6 +110,7 @@ export default function Chat() {
     <FlatList
       contentContainerStyle={styles.overlay}
       stickyHeaderIndices={[0]}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchChatRooms} />}
       ListHeaderComponent={
         <View style={[styles.header]}>
 
@@ -55,15 +124,20 @@ export default function Chat() {
         <View style={styles.headerRight}/>
       </View>
       }
-      data={dummyChatrooms}
+      data={chatRooms ?? []}
       renderItem={({ item, index }) => (
         <TouchableOpacity style={styles.chatroomItem} onPress={() => {handleChatroomPress(item, index)}} activeOpacity={0.8}>
           <Image
-            source={{ uri: 'https://mdbcdn.b-cdn.net/img/new/avatars/2.webp' }}
+            source={{ uri: item.itemImage || undefined }}
             style={styles.chatroomAvatar}
           />
           <View style={styles.chatroomInfo}>
-            <Text style={styles.chatroomTitle} numberOfLines={2}>{'Mark • Pizza Give Away'}</Text>
+            <Text style={styles.chatroomTitle} numberOfLines={1}>
+              {item.otherUserName || 'User'}
+            </Text>
+            <Text style={styles.chatroomSubtitle} numberOfLines={1}>
+              {item.itemTitle}
+            </Text>
           </View>
           <View>
             <Ionicons name="chevron-forward" size={24} color="black" />
@@ -73,6 +147,10 @@ export default function Chat() {
         )}
       keyExtractor={(item) => item.$id}
       contentInsetAdjustmentBehavior='automatic'
+      ListEmptyComponent={
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyText}>Uh oh! No messages found</Text>
+      </View>}
       />
     </SafeAreaView>
   )
@@ -138,6 +216,11 @@ const styles = StyleSheet.create({
     fontSize: FONT.size.md,
     fontWeight: '600',
     color: COLORS.text,
+    marginBottom: 2,
+  },
+  chatroomSubtitle: {
+    fontSize: FONT.size.sm,
+    color: COLORS.textMuted,
     letterSpacing: -0.2,
     marginBottom: SPACING.sm,
   },
@@ -170,5 +253,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    alignSelf: 'center',
+  },
+  emptyText: {
+    fontSize: FONT.size.md,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    letterSpacing: -0.2,
+    textAlign: 'center',
+    paddingHorizontal: SPACING.lg,
+  },
 })

@@ -27,8 +27,10 @@ export default function TabLayout() {
           tabBarBackground: () => (
             <View style={styles.tabBarBackground} />
           ),
-          animation: "shift",
-          
+          // Optimize performance
+          animation: 'fade', // Disable animations for better performance
+          freezeOnBlur: false, // Keep screens active when not focused
+          lazy: true, // Only render tabs when they become active
           tabBarHideOnKeyboard: true,
         }}>
       <Tabs.Screen

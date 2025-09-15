@@ -8,25 +8,25 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		24AA85ED9FDD152A5BD7F554 /* libPods-FindFreeFood.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 17722AEF9A1DEFB6FCAD4737 /* libPods-FindFreeFood.a */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
-		435B0110394D6234F0F20C66 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 769220F6E495C6D370E4B432 /* ExpoModulesProvider.swift */; };
-		8B8355A5B6D43E761EC07AF7 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 34613DD73E2177C30C7C6CB8 /* PrivacyInfo.xcprivacy */; };
+		7F914A1CCC36068BA7B156EF /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EAC37B0AA4165A70CCF1C82 /* ExpoModulesProvider.swift */; };
+		801B9A0A6E3CCCB2D1AD25E4 /* libPods-FindFreeFood.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 94676BF68CCD527FA4A0F1F8 /* libPods-FindFreeFood.a */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
+		F587F9691284FA4A4E764A77 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 3007B9CAB08429B0F5418060 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		13B07F961A680F5B00A75B9A /* FindFreeFood.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = FindFreeFood.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = FindFreeFood/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = FindFreeFood/Info.plist; sourceTree = "<group>"; };
-		17722AEF9A1DEFB6FCAD4737 /* libPods-FindFreeFood.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-FindFreeFood.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		34613DD73E2177C30C7C6CB8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = FindFreeFood/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		769220F6E495C6D370E4B432 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-FindFreeFood/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
-		929ABACE892178A57D1F80E7 /* Pods-FindFreeFood.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FindFreeFood.release.xcconfig"; path = "Target Support Files/Pods-FindFreeFood/Pods-FindFreeFood.release.xcconfig"; sourceTree = "<group>"; };
+		3007B9CAB08429B0F5418060 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = FindFreeFood/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		6A1844E45808658D97FEF845 /* Pods-FindFreeFood.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FindFreeFood.debug.xcconfig"; path = "Target Support Files/Pods-FindFreeFood/Pods-FindFreeFood.debug.xcconfig"; sourceTree = "<group>"; };
+		6EAC37B0AA4165A70CCF1C82 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-FindFreeFood/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		7C2F0D1C82F368E77137FE0F /* Pods-FindFreeFood.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FindFreeFood.release.xcconfig"; path = "Target Support Files/Pods-FindFreeFood/Pods-FindFreeFood.release.xcconfig"; sourceTree = "<group>"; };
+		94676BF68CCD527FA4A0F1F8 /* libPods-FindFreeFood.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-FindFreeFood.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = FindFreeFood/SplashScreen.storyboard; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		C957A8BB012B1D6418F78445 /* Pods-FindFreeFood.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-FindFreeFood.debug.xcconfig"; path = "Target Support Files/Pods-FindFreeFood/Pods-FindFreeFood.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = FindFreeFood/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* FindFreeFood-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "FindFreeFood-Bridging-Header.h"; path = "FindFreeFood/FindFreeFood-Bridging-Header.h"; sourceTree = "<group>"; };
@@ -37,7 +37,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				24AA85ED9FDD152A5BD7F554 /* libPods-FindFreeFood.a in Frameworks */,
+				801B9A0A6E3CCCB2D1AD25E4 /* libPods-FindFreeFood.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,26 +53,26 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				34613DD73E2177C30C7C6CB8 /* PrivacyInfo.xcprivacy */,
+				3007B9CAB08429B0F5418060 /* PrivacyInfo.xcprivacy */,
 			);
 			name = FindFreeFood;
-			sourceTree = "<group>";
-		};
-		2450A75DFF4100FA68C26CE9 /* ExpoModulesProviders */ = {
-			isa = PBXGroup;
-			children = (
-				C0C6279A9E3D72A56D049F4D /* FindFreeFood */,
-			);
-			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				17722AEF9A1DEFB6FCAD4737 /* libPods-FindFreeFood.a */,
+				94676BF68CCD527FA4A0F1F8 /* libPods-FindFreeFood.a */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		7ED0D824CE02329F030EAF6E /* FindFreeFood */ = {
+			isa = PBXGroup;
+			children = (
+				6EAC37B0AA4165A70CCF1C82 /* ExpoModulesProvider.swift */,
+			);
+			name = FindFreeFood;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -89,8 +89,8 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				ED8F638CF083FE942203269C /* Pods */,
-				2450A75DFF4100FA68C26CE9 /* ExpoModulesProviders */,
+				D35D0248DCDB8F0E6A77E7B5 /* Pods */,
+				E52182D11177FC864E76E014 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -114,22 +114,22 @@
 			path = FindFreeFood/Supporting;
 			sourceTree = "<group>";
 		};
-		C0C6279A9E3D72A56D049F4D /* FindFreeFood */ = {
+		D35D0248DCDB8F0E6A77E7B5 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				769220F6E495C6D370E4B432 /* ExpoModulesProvider.swift */,
-			);
-			name = FindFreeFood;
-			sourceTree = "<group>";
-		};
-		ED8F638CF083FE942203269C /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				C957A8BB012B1D6418F78445 /* Pods-FindFreeFood.debug.xcconfig */,
-				929ABACE892178A57D1F80E7 /* Pods-FindFreeFood.release.xcconfig */,
+				6A1844E45808658D97FEF845 /* Pods-FindFreeFood.debug.xcconfig */,
+				7C2F0D1C82F368E77137FE0F /* Pods-FindFreeFood.release.xcconfig */,
 			);
 			name = Pods;
 			path = Pods;
+			sourceTree = "<group>";
+		};
+		E52182D11177FC864E76E014 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				7ED0D824CE02329F030EAF6E /* FindFreeFood */,
+			);
+			name = ExpoModulesProviders;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,13 +140,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "FindFreeFood" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				5C79A6C221259529EC5E421D /* [Expo] Configure project */,
+				44D7E3A903DBFDF07726086E /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				A685CB432F439C0EC9F5517F /* [CP] Embed Pods Frameworks */,
+				F8939753E60051984166768F /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +196,7 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				8B8355A5B6D43E761EC07AF7 /* PrivacyInfo.xcprivacy in Resources */,
+				F587F9691284FA4A4E764A77 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,7 +240,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		5C79A6C221259529EC5E421D /* [Expo] Configure project */ = {
+		44D7E3A903DBFDF07726086E /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -297,7 +297,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-FindFreeFood/Pods-FindFreeFood-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		A685CB432F439C0EC9F5517F /* [CP] Embed Pods Frameworks */ = {
+		F8939753E60051984166768F /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -323,7 +323,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				435B0110394D6234F0F20C66 /* ExpoModulesProvider.swift in Sources */,
+				7F914A1CCC36068BA7B156EF /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -332,7 +332,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C957A8BB012B1D6418F78445 /* Pods-FindFreeFood.debug.xcconfig */;
+			baseConfigurationReference = 6A1844E45808658D97FEF845 /* Pods-FindFreeFood.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -368,7 +368,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 929ABACE892178A57D1F80E7 /* Pods-FindFreeFood.release.xcconfig */;
+			baseConfigurationReference = 7C2F0D1C82F368E77137FE0F /* Pods-FindFreeFood.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
