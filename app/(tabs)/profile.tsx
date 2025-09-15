@@ -90,7 +90,7 @@ const Profile = () => {
           <Text style={[styles.settingText, styles.logoutText]}>Logout</Text>
         </View>
       </TouchableOpacity>
-      <TouchableOpacity 
+      {/* <TouchableOpacity 
         style={[styles.settingItem, styles.logoutButton]} 
         onPress={handleLogout}
       >
@@ -98,7 +98,7 @@ const Profile = () => {
           <MaterialCommunityIcons name="delete" size={24} color="#EF4444" />
           <Text style={[styles.settingText, styles.logoutText]}>Delete Account</Text>
         </View>
-      </TouchableOpacity>
+      </TouchableOpacity> */}
     </View>
   );
 
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     backgroundColor: COLORS.background,
-    paddingBottom: 80, // Add some bottom padding for better scrolling
+    paddingBottom: 40, // Reduced bottom padding
   },
   header: {
     height: 280,
@@ -266,6 +266,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 20,
     paddingHorizontal: 16,
+    marginBottom: 20, // Add margin to ensure space below
+    minHeight: 200, // Ensure minimum height
   },
   settingItem: {
     flexDirection: 'row',
@@ -287,6 +289,7 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     borderBottomWidth: 0,
+    marginTop: 10, // Add some space above the delete button
   },
   logoutText: {
     color: '#EF4444',

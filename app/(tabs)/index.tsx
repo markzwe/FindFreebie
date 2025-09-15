@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, TouchableOpacity, Alert, FlatList, Dimensions, ScrollView } from 'react-native';
-import { useEffect, useState } from 'react';
+import { View, StyleSheet, FlatList, Text, TouchableOpacity, Modal, Dimensions, RefreshControl } from 'react-native';
+import Slider from '@react-native-community/slider';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { router } from 'expo-router';
 import { getCurrentUser, getLocation, logout } from '../../lib/appwrite';
 import { COLORS, SPACING } from '../../constants/theme';
@@ -9,12 +10,29 @@ import { useLocalSearchParams } from 'expo-router';
 import { useAppwrite } from '@/lib/useAppwrite';
 import { getItems } from '@/lib/appwrite';
 import Filter from '@/components/Filter';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import { CreateItemData, Item } from '@/type';
 import ItemCard from '@/components/ItemCard';
+import { Item } from '@/type';
+import { getDistanceFromLatLonInKm } from '@/utils/calculateDistance';
+import { DistanceChooser } from '@/components/DistanceChooser';
+
+// Add missing FONTS constant if not already defined in your theme
+const FONTS = {
+  h3: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  button: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+};
 
 const { width, height } = Dimensions.get('window');
+
+// Calculate item height based on screen width
+const ITEM_HEIGHT = (width / 2) * 1.4; // Adjust this based on your item's aspect ratio
 
 export default function Home() {
   const { category, query } = useLocalSearchParams<{category?: string, query?: string}>();
@@ -27,27 +45,102 @@ export default function Home() {
     refetch({ category, query });
   }, [category, query]);
 
-    const [location, setLocation] = useState<string | null>(null);
-    const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  
-    useEffect(() => {
-      async function getCurrentLocation() {
+  const [location, setLocation] = useState<{latitude: number, longitude: number, postalCode?: string} | null>(null);
+  const [locationText, setLocationText] = useState<string>('Loading...');
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showDistanceFilter, setShowDistanceFilter] = useState(false);
+  const [distance, setDistance] = useState(10); // Default 10km
+  const [filteredData, setFilteredData] = useState<Item[]>([]);
+
+  useEffect(() => {
+    async function getCurrentLocation() {
         
-        let { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') {
-          setErrorMsg('Permission to access location was denied');
-          return;
-        }
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setErrorMsg('Permission to access location was denied');
+        return;
+      }
+
+      const position = await Location.getCurrentPositionAsync({});
+      const postalCode = await Location.reverseGeocodeAsync(position.coords);
+      const locationData = {
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        postalCode: postalCode[0]?.postalCode || 'Unknown'
+      };
+      setLocation(locationData);
+      setLocationText(locationData.postalCode || 'Your Location');
+      }
   
-        let location = await Location.getCurrentPositionAsync({});
-        const postalCode = await Location.reverseGeocodeAsync(location.coords);
-        setLocation(postalCode[0].postalCode);
-        }
-  
-      getCurrentLocation();
-    }, []);
-  
-  
+    getCurrentLocation();
+  }, []);
+
+  const filterItemsByDistance = useCallback((items: Item[], userLocation: {latitude: number, longitude: number}, maxDistance: number) => {
+    if (!items || !userLocation) return [];
+    
+    return items.filter(item => {
+      // Use coordinates from location object if available, otherwise use direct props
+      const itemLat = item.location?.coordinates?.latitude ?? item.latitude;
+      const itemLng = item.location?.coordinates?.longitude ?? item.longitude;
+      
+      if (itemLat === undefined || itemLng === undefined) return false;
+      
+      const itemLocation = {
+        latitude: typeof itemLat === 'string' ? parseFloat(itemLat) : itemLat,
+        longitude: typeof itemLng === 'string' ? parseFloat(itemLng) : itemLng
+      };
+      
+      const distance = getDistanceFromLatLonInKm(
+        userLocation,
+        itemLocation
+      );
+      
+      return distance <= maxDistance;
+    });
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setRefreshing(true);
+      const response = await getItems({});
+      const items = (response as unknown as any[]).map((item) => ({
+        ...item,
+        latitude: item.location?.coordinates?.latitude,
+        longitude: item.location?.coordinates?.longitude
+      })) as Item[];
+      
+      refetch({ category, query });
+      
+      if (location) {
+        const filtered = filterItemsByDistance(items, location, distance);
+        setFilteredData(filtered);
+      } else {
+        setFilteredData(items);
+      }
+    } catch (error) {
+      console.error('Error fetching items:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    if (data && location) {
+      const items = (data as unknown as any[]).map((item) => ({
+        ...item,
+        latitude: item.location?.coordinates?.latitude,
+        longitude: item.location?.coordinates?.longitude
+      })) as Item[];
+      const filtered = filterItemsByDistance(items, location, distance);
+      setFilteredData(filtered);
+    }
+  }, [data, location, distance, filterItemsByDistance]);
+
+  const onRefresh = useCallback(() => {
+    fetchData();
+  }, []);
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -57,13 +150,31 @@ export default function Home() {
 
             {/* Filter Section */}
             <View style={styles.filterSection}>
-              <Filter />
-            </View>
+              <View style={styles.filterRow}>
+                <Filter />
+                <View style={styles.distanceContainer}>
+                  <DistanceChooser 
+                    selectedDistance={distance}
+                    onDistanceChange={setDistance}
+                    visible={true}
+                    onClose={() => {}}
+                  />
+                </View>
+              </View>
+          </View>
       </View>
       <FlatList
-        data={data as unknown as CreateItemData[]}
+        data={filteredData.length > 0 ? filteredData : (data as unknown as Item[])}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[COLORS.accent]}
+            tintColor={COLORS.accent}
+          />
+        }
         ListHeaderComponent={
           <View style={styles.header}>
             {/* Search Section */}
@@ -72,12 +183,16 @@ export default function Home() {
           <View style={styles.stickyHeader}>
             <View style={styles.sectionHeader}>
               <View>
-                <Text style={styles.sectionTitle}>Today's Pick</Text>
-                <Text style={styles.sectionSubtitle}>{data?.length || 0} Freebies found</Text>
+                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%'}}>
+          <View>
+            <Text style={styles.sectionTitle}>Today's Pick</Text>
+            <Text style={styles.sectionSubtitle}>{filteredData?.length || 0} Freebies found</Text>
+          </View>
+        </View>
               </View>
               <View style={styles.locationRow}>
                 <Ionicons name="location" size={20} color={COLORS.accent} />
-                <Text style={styles.locationText}>{location}</Text>
+                <Text style={styles.locationText}>{locationText}</Text>
               </View>
             </View>
           </View>
@@ -100,17 +215,23 @@ export default function Home() {
         //     </View>
         //   </View>
         // )}
-        renderItem={({ item, index }) => {
-          return (
-            <>
-            
-            <View style={[styles.itemCard, index % 2 === 0 ? { marginRight: SPACING.sm } : { marginLeft: SPACING.sm }]}>
-              <ItemCard item={item} />
-            </View>
-            </>
-          )
-          }
-        }
+        // Performance optimizations
+        initialNumToRender={4} // Reduce initial render count
+        maxToRenderPerBatch={4} // Reduce number of items rendered per batch
+        updateCellsBatchingPeriod={100} // Time between batch renders
+        windowSize={5} // Reduce the window size
+        removeClippedSubviews={true} // Unmount offscreen views
+        keyExtractor={(item) => item.$id} // Use $id instead of id
+        getItemLayout={(data, index) => ({
+          length: ITEM_HEIGHT,
+          offset: ITEM_HEIGHT * index,
+          index,
+        })}
+        renderItem={useCallback(({ item, index }: { item: Item; index: number }) => (
+          <View style={[styles.itemCard, index % 2 === 0 ? { marginRight: SPACING.sm } : { marginLeft: SPACING.sm }]}>
+            <ItemCard item={item} />
+          </View>
+        ), [])}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <View style={styles.emptyIconContainer}>
@@ -126,6 +247,33 @@ export default function Home() {
       
         numColumns={2}
       />
+      <Modal
+        visible={showDistanceFilter}
+        transparent={true}
+        onRequestClose={() => setShowDistanceFilter(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Distance Filter</Text>
+            <Text style={styles.distanceValue}>{distance} km</Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={1}
+              maximumValue={50}
+              step={1}
+              value={distance}
+              onValueChange={setDistance}
+            />
+            <View style={styles.sliderLabels}>
+              <Text>1 km</Text>
+              <Text>50 km</Text>
+            </View>
+            <TouchableOpacity style={styles.applyButton} onPress={() => setShowDistanceFilter(false)}>
+              <Text style={styles.applyButtonText}>Apply</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -163,7 +311,13 @@ const styles = StyleSheet.create({
     marginTop: 0,
   },
   filterSection: {
-    marginTop: 0,
+    marginBottom: SPACING.md,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
   },
 
   // Section Header
@@ -201,12 +355,75 @@ const styles = StyleSheet.create({
 
   // Sticky Header
   stickyHeader: {
+    padding: SPACING.md,
     backgroundColor: COLORS.background,
-    paddingTop: SPACING.sm,
-    paddingBottom: SPACING.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    paddingHorizontal: SPACING.md,
+    width: '100%',
+  },
+  distanceContainer: {
+    marginLeft: SPACING.md,
+    marginTop: SPACING.xs,
+  },
+  distanceButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: 20,
+  },
+  distanceText: {
+    color: COLORS.text,
+    marginLeft: 4,
+    fontWeight: '600',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    backgroundColor: COLORS.surface,
+    padding: SPACING.lg,
+    borderRadius: 12,
+    width: '80%',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: SPACING.md,
+    color: COLORS.text,
+  },
+  distanceValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.accent,
+    marginBottom: SPACING.lg,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  sliderLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: SPACING.sm,
+    marginTop: SPACING.xs,
+  },
+  applyButton: {
+    backgroundColor: COLORS.accent,
+    padding: SPACING.md,
+    borderRadius: 8,
+    marginTop: SPACING.lg,
+    width: '100%',
+    alignItems: 'center',
+  },
+  applyButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 
   // Item Cards

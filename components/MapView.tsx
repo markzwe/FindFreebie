@@ -49,6 +49,7 @@ export default function MapView({location, setLocation, viewOnly}: {location: Co
   return (
     <View style={styles.container}>
       <AppleMaps.View 
+ 
         style={styles.map}
         cameraPosition={{
           coordinates: mapCoordinates,
@@ -62,6 +63,11 @@ export default function MapView({location, setLocation, viewOnly}: {location: Co
           ],
         })}
         onCameraMove={viewOnly ? undefined : handleCameraMove}
+        onMapClick={viewOnly ? undefined : handleCameraMove}
+        uiSettings={{
+          togglePitchEnabled: false,
+          
+        }}
       />
       {!viewOnly && (
         <Image

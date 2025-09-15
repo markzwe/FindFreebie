@@ -18,15 +18,26 @@ export interface Category {
     name: string;
 }
 
-export interface Item extends Models.Row {
+// This interface represents a complete item from the database
+export interface AppwriteListResponse<T> {
+    total: number;
+    documents: T[];
+}
+
+export interface Item {
     title: string;
+    $id: string;
     description?: string;
-    location: CoordinatesType; // Changed to string to match CreateItemData
-    categories: string;
+    location: CoordinatesType;
+    category: string;
     image: string;
-    eventDate: string | Date; // Allow both string (from DB) and Date (processed)
-    startTime?: string | Date;
-    endTime?: string | Date;
+    eventDate: Date;
+    startTime?: Date;
+    latitude?: number;
+    longitude?: number;
+    endTime?: Date;
+    address: string;
+    user: string; // User ID of the item creator
 }
 
 export interface CoordinatesType {
@@ -41,16 +52,6 @@ export interface AddressType {
     postalCode: string;
 }
 
-export interface CreateItemData {
-    title: string;
-    description?: string;
-    location: CoordinatesType;
-    category: string;
-    image: string;
-    eventDate: Date;
-    startTime?: Date;
-    endTime?: Date;
-}
 
 interface DateTimePickerModalProps {
     isVisible: boolean;
@@ -79,19 +80,34 @@ interface ItemViewDetailModalProps {
 }
 
 interface Chatroom extends Models.Row{
-    item: string;
-    buyer: string;
-    seller: string;
-    messages: string[];
-    
-    
-}
-interface Message extends Models.Row {
     $id: string;
     $createdAt: string;
     $updatedAt: string;
-    content: string;
-    senderId: string;
-    chatroomId: string;
-    createdAt: string;
+    item: string;
+    buyer: string;
+    seller: string;
+    messages: string;
+    
+}
+interface ChatroomResponse {
+    rows: Chatroom[];
+    total: number;
+}
+
+export interface Message extends Models.Document {
+  $id: string;
+  content: string;
+  senderId: string;
+  chatroomId: string;
+  $createdAt: string;
+  $updatedAt: string;
+  $databaseId?: string;
+  $permissions?: string[];
+  $sequence?: number;
+  $tableId?: string;
+}
+
+export interface MessageResponse {
+    rows: Message[];
+    total: number;
 }

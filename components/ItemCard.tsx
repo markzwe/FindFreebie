@@ -1,14 +1,14 @@
 import { View, Text, StyleSheet } from 'react-native'
 import React from 'react'
-import { CreateItemData } from '@/type'
+import { Item } from '@/type'
 import { COLORS, SPACING } from '@/constants/theme';
 import { Image } from 'expo-image';
 import { TouchableOpacity } from 'react-native';
 import ItemViewDetailModal from './ItemViewDetail';
 
-export default function ItemCard({item}: {item: CreateItemData}) {
-
+export default function ItemCard({item}: {item: Item}) {
   const [isViewDetailModalVisible, setIsViewDetailModalVisible] = React.useState(false);
+  
   const handleViewDetail = () => {
     setIsViewDetailModalVisible(true);
   }
