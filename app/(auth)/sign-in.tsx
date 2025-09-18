@@ -1,64 +1,155 @@
-import { View, Text, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { 
+  View, 
+  Text, 
+  TouchableOpacity, 
+  StyleSheet, 
+  Alert, 
+  Image, 
+   
+  ActivityIndicator, 
+  Platform,
+  ImageStyle,
+  ViewStyle,
+  TextStyle
+} from 'react-native';
 import { router } from 'expo-router';
 import { login } from '../../lib/appwrite';
+import { COLORS } from '@/constants/theme';
+import { Ionicons } from '@expo/vector-icons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SignIn() {
+  const [isLoading, setIsLoading] = useState(false);
+
   const handleGoogleSignIn = async () => {
+    setIsLoading(true);
     try {
       const session = await login();
-      if (session) {
-        router.replace('/(tabs)');
+      // TODO: Replace 'true' with 'session' after appwrite upgrade
+      if (true) {
+        router.replace('/(auth)/permissions');
       } else {
-        Alert.alert('Error', 'Failed to sign in');
+        Alert.alert('Error', 'Failed to sign in. Please try again.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to sign in');
+      console.error('Sign in error:', error);
+      Alert.alert('Error', 'An unexpected error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>FindFreeFood</Text>
-      <Text style={styles.subtitle}>Discover free food in your area</Text>
-      
-      <TouchableOpacity style={styles.googleButton} onPress={handleGoogleSignIn}>
-        <Text style={styles.buttonText}>Sign in with Google</Text>
-      </TouchableOpacity>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          <Image 
+            source={require('../../assets/images/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.title}>Findfreebies</Text>
+          <Text style={styles.subtitle}>Discover freebies in your area</Text>
+        </View>
+        
+        <View style={styles.bottomContainer}>
+          <TouchableOpacity 
+            style={styles.googleButton} 
+            onPress={handleGoogleSignIn}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <View style={styles.buttonContent}>
+                <Ionicons name="logo-google" size={20} color="#FFFFFF" style={styles.googleIcon} />
+                <Text style={styles.buttonText}>Continue with Google</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          
+          <Text style={styles.termsText}>
+            By continuing, you agree to our Terms of Service and Privacy Policy
+          </Text>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  content: {
+    flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    justifyContent: 'space-between',
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginTop: 60,
+  },
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: 20,
   },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#333',
+    color: COLORS.text,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 40,
+    color: COLORS.textMuted,
     textAlign: 'center',
+    paddingHorizontal: 40,
+    lineHeight: 24,
+  },
+  bottomContainer: {
+    marginBottom: 40,
   },
   googleButton: {
-    backgroundColor: '#4285F4',
-    paddingHorizontal: 30,
-    paddingVertical: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.accent,
+    padding: 16,
     borderRadius: 8,
-    minWidth: 200,
+    marginBottom: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  googleIcon: {
+    marginRight: 8,
   },
   buttonText: {
-    color: 'white',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  termsText: {
+    fontSize: 12,
+    color: '#666666',
     textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 18,
   },
 });

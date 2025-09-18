@@ -5,8 +5,9 @@ import { View, StyleSheet } from 'react-native';
 
 export default function TabLayout() {
 
-  const segment = useSegments();
-  const hideTabBar = [...segment].includes("ChatScreen");
+  const segments = useSegments();
+  const currentSegment = segments[segments.length - 1];
+  const hideTabBar = currentSegment === 'ChatScreen' || currentSegment === 'myListings';
   return (
     <View style={styles.container}>
       <Tabs
@@ -63,7 +64,7 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="(profile)"
         options={{
           title: 'Profile',
           tabBarIcon: ({ color, focused }) => (

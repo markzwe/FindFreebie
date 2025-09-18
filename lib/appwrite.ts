@@ -249,7 +249,7 @@ export async function addItems({
 }
 
 // Fixed getItems function
-export async function getItems({category, query, distance}: {category?: string, query?: string, distance?: number}) {
+export async function getItems({category, query, distance, userId}: {category?: string, query?: string, distance?: number, userId?: string}) {
     try {
         const queries: string[] = [];
         
@@ -258,6 +258,10 @@ export async function getItems({category, query, distance}: {category?: string, 
         
         // Fixed: Search in title field instead of name\
         if (query) queries.push(Query.contains("title", query));
+        
+
+        if (userId) queries.push(Query.equal("user", [userId]));
+
         console.log("Query:", queries);
         const items = await tablesDB.listRows({
             databaseId: appwriteConfig.databaseId!,

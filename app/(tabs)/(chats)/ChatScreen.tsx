@@ -32,7 +32,6 @@ const MessageBubble = React.memo(({
 
 export default function ChatScreen() {
   const params = useLocalSearchParams();
-  console.log(params);
   const chatroomId = typeof params.chatroomId === 'string' ? params.chatroomId : undefined;
   const itemImage = params.itemImage;
 
