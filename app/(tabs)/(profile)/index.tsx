@@ -1,21 +1,21 @@
 import {
   Alert,
-  SafeAreaView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
-  ImageBackground,
+  View
 } from "react-native";
 
-import { getCurrentUser, getUserFromDatabase, logout } from "@/lib/appwrite";
+import { ACTIONS, SETTINGS } from "@/constants";
+import { COLORS, SHADOW } from "@/constants/theme";
+import { getUserFromDatabase, logout } from "@/lib/appwrite";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { COLORS, SHADOW, SIZES } from "@/constants/theme";
 import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ACTIONS, SETTINGS, STATS } from "@/constants";
+import { router, Stack } from "expo-router";
 
 const Profile = () => {
   const [userDB, setUserDB] = useState<any>(null);
@@ -45,26 +45,65 @@ const Profile = () => {
     }
   };
 
-  const renderStats = () => (
-    <View style={styles.statsContainer}>
-      {STATS.map((stat) => (
-        <View key={stat.id} style={styles.statItem}>
+  // const renderStats = () => (
+  //   <View style={styles.statsContainer}>
+  //     {STATS.map((stat) => (
+  //       <View key={stat.id} style={styles.statItem}>
      
-          <Text style={styles.statValue}>{stat.value}</Text>
-          <Text style={styles.statLabel}>{stat.label}</Text>
-        </View>
-      ))}
-    </View>
-  );
+  //         <Text style={styles.statValue}>{stat.value}</Text>
+  //         <Text style={styles.statLabel}>{stat.label}</Text>
+  //       </View>
+  //     ))}
+  //   </View>
+  // );
 
   const renderActions = () => (
-    <View style={styles.actionsContainer}>
+    <View style={[styles.actionsContainer, { justifyContent: 'center' }]}>
       {ACTIONS.map((action) => (
-        <TouchableOpacity key={action.id} style={styles.actionButton}>
-          <View style={[styles.actionIcon, { backgroundColor: `${action.color}15` }]}>
-            <Ionicons name={action.icon as any} size={24} color={action.color} />
+        <TouchableOpacity 
+          key={action.id} 
+          style={[
+            styles.actionButton,
+            { 
+              width: 120,
+              alignItems: 'center',
+              padding: 16,
+              borderRadius: 12,
+              backgroundColor: '#fff',
+              ...SHADOW.medium
+            }
+          ]}
+          activeOpacity={0.8}
+          onPress={() => {
+            router.push({
+              pathname: '/(tabs)/(profile)/myListings',
+              params: { userID: userDB?._id }
+            });
+          }}
+        >
+          <View 
+            style={[
+              styles.actionIcon, 
+              { 
+                backgroundColor: `${action.color}15`,
+                width: 50,
+                height: 50,
+                borderRadius: 25,
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: 8
+              }
+            ]}
+          >
+            <Ionicons 
+              name={action.icon as any} 
+              size={24} 
+              color={action.color} 
+            />
           </View>
-          <Text style={styles.actionText}>{action.title}</Text>
+          <Text style={styles.actionText}>
+            {action.title}
+          </Text>
         </TouchableOpacity>
       ))}
     </View>
@@ -104,6 +143,7 @@ const Profile = () => {
 
   
   return (
+    <>
     <View style={styles.outerContainer}>
       <ScrollView 
         showsVerticalScrollIndicator={false} 
@@ -130,12 +170,24 @@ const Profile = () => {
           </View>
 
         <View style={styles.content}>
-          {renderStats()}
           {renderActions()}
           {renderSettings()}
         </View>
+        <View style={styles.bottomContainer}>
+  <Image 
+    source={require('../../../assets/images/logo.png')}
+    style={styles.appIcon}
+    contentFit="cover"
+  />
+  <Text style={styles.appName}>Findfreebies</Text>
+  <Text style={styles.appVersion}>Version 1.0.0</Text>
+  <Text style={styles.madeWithText}>
+    Made with ❤️ in Dayton, Ohio
+  </Text>
+</View>
       </ScrollView>
     </View>
+    </>
   );
 };
 
@@ -236,6 +288,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   actionsContainer: {
+    alignSelf: 'center',
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 20,
@@ -294,6 +347,64 @@ const styles = StyleSheet.create({
   logoutText: {
     color: '#EF4444',
   },
+  bottomContainer: {
+    padding: 20,
+    alignItems: 'center',
+
+    paddingTop: 10,
+    paddingBottom: 50,
+  },
+  appIcon: {
+    borderRadius: 12,
+    width: 45,
+    height: 45,
+    marginBottom: 15,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.25,
+        shadowRadius: 5,
+      },
+      android: {
+        elevation: 5,
+        shadowColor: '#000',
+      },
+    }),
+    backgroundColor: '#fff',
+    padding: 5,
+  },
+  appName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  madeWithText: {
+    marginBottom: 16,
+    fontSize: 14,
+    color: COLORS.textMuted,
+  },
+  socialIcons: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  socialIcon: {
+    marginHorizontal: 12,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  appVersion: {
+    fontSize: 12,
+    color: COLORS.textMuted,
+    marginBottom: 8,
+  },
+
 });
+
 
 export default Profile;

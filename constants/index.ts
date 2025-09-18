@@ -31,21 +31,21 @@ export const settings = [
       title: "Invite Friends",
     },
   ];
-  export const STATS = [
-    { id: '1', label: 'Items Found', value: '24', icon: 'gift-outline' },
-    { id: '2', label: 'Items Shared', value: '12', icon: 'share-social-outline' },
-  ];
+  // export const STATS = [
+  //   { id: '1', label: 'Items Found', value: '24', icon: 'gift-outline' },
+  //   { id: '2', label: 'Items Shared', value: '12', icon: 'share-social-outline' },
+  // ];
   
   export const ACTIONS = [
     { id: '1', title: 'My Listings', icon: 'list-outline', color: COLORS.accent },
-    { id: '2', title: 'Saved Items', icon: 'bookmark-outline', color: COLORS.accent },
-    { id: '3', title: 'Messages', icon: 'chatbubble-ellipses-outline', color: '#FF9F43' },
+    // { id: '2', title: 'Saved Items', icon: 'bookmark-outline', color: COLORS.accent },
   ];
   
   export const SETTINGS = [
-     { id: '1', title: 'Notification Settings', icon: 'notifications-outline' },
-    { id: '2', title: 'Help & Support', icon: 'help-circle-outline' },
-    { id: '3', title: 'About', icon: 'information-circle-outline' },
-    { id: '4', title: 'Account Settings', icon: 'settings-outline' },
+    //  { id: '1', title: 'Notification Settings', icon: 'notifications-outline' },
+    // { id: '2', title: 'Help & Support', icon: 'help-circle-outline' },
+    { id: '3', title: 'Terms & Conditions', icon: 'document-text-outline' },
+    { id: '4', title: 'Privacy Policy', icon: 'lock-closed-outline' },
+    { id: '5', title: 'Account Settings', icon: 'settings-outline' },
   ];
   
