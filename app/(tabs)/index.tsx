@@ -2,7 +2,7 @@ import { View, StyleSheet, FlatList, Text, TouchableOpacity, Modal, Dimensions, 
 import Slider from '@react-native-community/slider';
 import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { router } from 'expo-router';
-import { getCurrentUser, getLocation, logout } from '../../lib/appwrite';
+import { getCurrentUser, logout } from '../../lib/appwrite';
 import { COLORS, FONT, SPACING, RADIUS } from '@/constants/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import SearchBar from '@/components/SearchBar';
@@ -35,24 +35,39 @@ const { width, height } = Dimensions.get('window');
 const ITEM_HEIGHT = (width / 2) * 1.4; // Adjust this based on your item's aspect ratio
 
 export default function Home() {
-  const { category, query } = useLocalSearchParams<{category?: string, query?: string}>();
-  const { data, refetch, loading } = useAppwrite({
-    fn: getItems,
-    params: { category, query },
-    skip: !category && !query
-  });
-  useEffect(() => {
-    refetch({ category, query });
-  }, [category, query]);
-
   const [location, setLocation] = useState<{latitude: number, longitude: number, postalCode?: string} | null>(null);
   const [locationText, setLocationText] = useState<string>('Loading...');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [showDistanceFilter, setShowDistanceFilter] = useState(false);
-  const [distance, setDistance] = useState(10); // Default 10km
   const [filteredData, setFilteredData] = useState<Item[]>([]);
+  const { category, query, distance, userId } = useLocalSearchParams<{
+    category?: string;
+    query?: string;
+    distance?: string; // Note: URL params are always strings
+    userId?: string;
+  }>();
+  
+  // Prepare params object with only defined values and proper types
+  const params = {
+    ...(category && { category: String(category) }),
+    ...(query && { query: String(query) }),
+    ...(distance && { distance: Number(distance) }),
+    ...(userId && { userId: String(userId) })
+  } as const;
 
+  const { data, refetch, loading } = useAppwrite({
+    fn: getItems,
+    params,
+    skip: !category && !query && !distance && !userId
+  });
+  useEffect(() => {
+    refetch({ category, query, distance: Number(distance), userId });
+    setRefreshing(false);
+  }, [category, query, distance, userId, refreshing]);
+
+ 
+
+  //
   useEffect(() => {
     async function getCurrentLocation() {
         
@@ -76,70 +91,6 @@ export default function Home() {
     getCurrentLocation();
   }, []);
 
-  const filterItemsByDistance = useCallback((items: Item[], userLocation: {latitude: number, longitude: number}, maxDistance: number) => {
-    if (!items || !userLocation) return [];
-    
-    return items.filter(item => {
-      // Use coordinates from location object if available, otherwise use direct props
-      const itemLat = item.latitude ?? item.latitude;
-      const itemLng = item.longitude ?? item.longitude;
-      
-      if (itemLat === undefined || itemLng === undefined) return false;
-      
-      const itemLocation = {
-        latitude: typeof itemLat === 'string' ? parseFloat(itemLat) : itemLat,
-        longitude: typeof itemLng === 'string' ? parseFloat(itemLng) : itemLng
-      };
-      
-      const distance = getDistanceFromLatLonInKm(
-        userLocation,
-        itemLocation
-      );
-      
-      return distance <= maxDistance;
-    });
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      setRefreshing(true);
-      const response = await getItems({});
-      const items = (response as unknown as any[]).map((item) => ({
-        ...item,
-        latitude: item.latitude,
-        longitude: item.longitude
-      })) as Item[];
-      
-      refetch({ category, query });
-      
-      if (location) {
-        const filtered = filterItemsByDistance(items, location, distance);
-        setFilteredData(filtered);
-      } else {
-        setFilteredData(items);
-      }
-    } catch (error) {
-      console.error('Error fetching items:', error);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  useEffect(() => {
-    if (data && location) {
-      const items = (data as unknown as any[]).map((item) => ({
-        ...item,
-        latitude: item.latitude,
-        longitude: item.longitude
-      })) as Item[];
-      const filtered = filterItemsByDistance(items, location, distance);
-      setFilteredData(filtered);
-    }
-  }, [data, location, distance, filterItemsByDistance]);
-
-  const onRefresh = useCallback(() => {
-    fetchData();
-  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -160,8 +111,6 @@ export default function Home() {
                 </View>
                 <View style={styles.distanceContainer}>
                   <DistanceChooser 
-                    selectedDistance={distance}
-                    onDistanceChange={setDistance}
                     visible={true}
                     onClose={() => {}}
                   />
@@ -177,48 +126,12 @@ export default function Home() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={onRefresh}
+            onRefresh={() => setRefreshing(true)}
             colors={[COLORS.accent]}
             tintColor={COLORS.accent}
           />
         }
-        ListHeaderComponent={
-          <View style={styles.header}>
-            {/* Search Section */}
-  
-            {/* Non Sticky Header. this start should be stay in place at top */}
-          <View style={styles.stickyHeader}>
-            <View style={styles.sectionHeader}>
-              <View>
-                <View style={{flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%'}}>
-          <View>
-            <Text style={styles.sectionTitle}>Today's Pick</Text>
-            <Text style={styles.sectionSubtitle}>{filteredData?.length || 0} Freebies found</Text>
-          </View>
-        </View>
-              </View>
         
-            </View>
-          </View>
-            
-
-          </View>
-        }
-        
-        // StickyHeaderComponent={() => (
-        //   <View style={styles.stickyHeader}>
-        //     <View style={styles.sectionHeader}>
-        //       <View>
-        //         <Text style={styles.sectionTitle}>Today's Pick</Text>
-        //         <Text style={styles.sectionSubtitle}>{data?.length || 0} Freebies found</Text>
-        //       </View>
-        //       <View style={styles.locationRow}>
-        //         <Ionicons name="location" size={20} color={COLORS.accent} />
-        //         <Text style={styles.locationText}>{location}</Text>
-        //       </View>
-        //     </View>
-        //   </View>
-        // )}
         // Performance optimizations
         initialNumToRender={4} // Reduce initial render count
         maxToRenderPerBatch={4} // Reduce number of items rendered per batch
@@ -251,33 +164,6 @@ export default function Home() {
       
         numColumns={2}
       />
-      <Modal
-        visible={showDistanceFilter}
-        transparent={true}
-        onRequestClose={() => setShowDistanceFilter(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Distance Filter</Text>
-            <Text style={styles.distanceValue}>{distance} km</Text>
-            <Slider
-              style={styles.slider}
-              minimumValue={1}
-              maximumValue={50}
-              step={1}
-              value={distance}
-              onValueChange={setDistance}
-            />
-            <View style={styles.sliderLabels}>
-              <Text>1 km</Text>
-              <Text>50 km</Text>
-            </View>
-            <TouchableOpacity style={styles.applyButton} onPress={() => setShowDistanceFilter(false)}>
-              <Text style={styles.applyButtonText}>Apply</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 }

@@ -14,6 +14,7 @@ import {
   TextInput,
   StyleSheet,
   Modal,
+  Switch
 } from "react-native";
 
 import { Image } from "expo-image";
@@ -39,6 +40,9 @@ export default function AddItem() {
 
   const [category, setCategory] = useState<"Food" | "Item">("Food");
   const [date, setDate] = useState<Date>(new Date());
+  // Switch
+  const [showPreciseLocation, setShowPreciseLocation] = useState(false);
+  const toggleSwitch = () => setShowPreciseLocation(previousState => !previousState);
   
   // FIXED: Initialize times as undefined since they're optional
   const [startTime, setStartTime] = useState<Date | undefined>(undefined);
@@ -48,11 +52,13 @@ export default function AddItem() {
   const [isDescriptionModalVisible, setIsDescriptionModalVisible] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   
-  const [location, setLocation] = useState<CoordinatesType | null>(null);
+  const [userLocation, setUserLocation] = useState<CoordinatesType | null>(null);
   const [address, setAddress] = useState<AddressType>({
     name: "",
     postalCode: ""
   });
+
+  // FIXED: Get user data
   useEffect(() => {
     const fetchUser = async () => {
       const userData = await getUserFromDatabase();
@@ -61,6 +67,7 @@ export default function AddItem() {
     fetchUser();
   }, []);
 
+  // FIXED: Get user location
   useEffect(() => {
     async function getCurrentLocation() {
       try {
@@ -71,7 +78,7 @@ export default function AddItem() {
         }
 
         let location = await Location.getCurrentPositionAsync({});
-        setLocation({
+        setUserLocation({
           coordinates: {
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -85,13 +92,14 @@ export default function AddItem() {
     getCurrentLocation();
   }, []);
 
+  // FIXED: Get address from user location
   useEffect(() => {
     const getAddress = async () => {
-      if (location?.coordinates?.latitude && location?.coordinates?.longitude) {
+      if (userLocation?.coordinates?.latitude && userLocation?.coordinates?.longitude) {
         try {
           const reverseGeoCoding = await Location.reverseGeocodeAsync({
-            latitude: location.coordinates.latitude,
-            longitude: location.coordinates.longitude,
+            latitude: userLocation.coordinates.latitude,
+            longitude: userLocation.coordinates.longitude,
           });
           setAddress({
             name: reverseGeoCoding[0]?.name || reverseGeoCoding[0]?.street || "",
@@ -104,7 +112,7 @@ export default function AddItem() {
     };
 
     getAddress();
-  }, [location]);
+  }, [userLocation]);
 
   // FIXED: Initialize times when time picker is enabled
   const handleTimePickerToggle = (enabled: boolean) => {
@@ -143,11 +151,10 @@ export default function AddItem() {
     const item: Item = {
       $id: ID.unique(),
       title: title.trim(),
-      address: JSON.stringify(address),
+      address: JSON.stringify(address) as string,
       description: description.trim() || undefined,
-      latitude: location?.coordinates?.latitude,
-      longitude: location?.coordinates?.longitude,
-      category : category, // This will be mapped to 'category' in the database
+      location: [userLocation?.coordinates?.longitude, userLocation?.coordinates?.latitude],
+      category: category, // This will be mapped to 'category' in the database
       image: selectedImage,
       eventDate: date,
       startTime: showTimePicker && startTime ? startTime : undefined,
@@ -179,7 +186,7 @@ export default function AddItem() {
           name: "",
           postalCode: ""
         });
-        setLocation(null);
+        setUserLocation(null);
         
         router.replace("/");
       } else {
@@ -412,24 +419,38 @@ export default function AddItem() {
 
             {/* LOCATION/MAP */}
             <View style={styles.fieldContainer}> 
-              <TouchableOpacity
-                style={styles.input}
-                onPress={() => {}} // You can implement map modal here
-                activeOpacity={0.7}
-                disabled={isSharing}
+              <View
+                style={styles.locationContainer}
               >
-                <Text style={styles.locationText}>Location</Text>
-                <Text style={styles.mapButtonText}>
-                  {address?.name && address?.postalCode 
-                    ? `${address.name}, ${address.postalCode}` 
-                    : location?.coordinates
-                    ? `${location.coordinates.latitude.toFixed(4)}, ${location.coordinates.longitude.toFixed(4)}`
-                    : "Getting location..."}
-                </Text>
-              </TouchableOpacity>
+                <View style={styles.locationTextColumn}>
+                  <Text style={styles.locationText}>Location</Text>
+                  <Text style={styles.mapButtonText}>
+                    { 
+                        showPreciseLocation 
+                          ? `${address?.name}, ${address?.postalCode}`
+                          : address?.postalCode
+                    }
+                  </Text>
+                </View>
+                <View style={styles.locationSwitchContainer}>
+                <Text style={styles.locationText}>Show precise location</Text>
+                <Switch
+                disabled={isSharing}
+                  trackColor={{ false: COLORS.white, true: COLORS.accent }}
+                  thumbColor={ COLORS.white}
+                  ios_backgroundColor={COLORS.white}
+                
+                  onValueChange={toggleSwitch}
+                  value={showPreciseLocation}
+                  style={{
+                    alignSelf: "center",
+                  }}
+                />
+                </View>
+              </View>
 
-              {location && (
-                <MapView location={location} setLocation={setLocation} />
+              {userLocation && (
+                <MapView location={userLocation} viewOnly={false}  setLocation={setUserLocation}/>
               )}
             </View>
           </View>
@@ -625,6 +646,33 @@ const styles = StyleSheet.create({
     minHeight: 56,
     justifyContent: 'center',
   },
+  locationContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: SPACING.md,
+    backgroundColor: COLORS.surface,
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm,
+    fontSize: FONT.size.md,
+    color: COLORS.text,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    lineHeight: 20,
+    minHeight: 56,
+  },
+  locationTextColumn: {
+    flexDirection: "column",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+    gap: SPACING.md,
+  },
+  locationSwitchContainer: {
+    flexDirection: "column",
+    alignItems: "flex-end",
+    justifyContent: "flex-end",
+  },
   inputFilled: {
     borderColor: COLORS.accent,
     backgroundColor: COLORS.surface,
@@ -722,6 +770,7 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontWeight: "500",
     marginTop: 2,
+    textAlign: "left",
   },
 
   /* MAP */

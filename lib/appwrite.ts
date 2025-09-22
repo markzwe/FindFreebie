@@ -5,6 +5,7 @@ import { openAuthSessionAsync } from "expo-web-browser";
 import { makeRedirectUri } from 'expo-auth-session'
 import * as WebBrowser from 'expo-web-browser';
 import { Item, CoordinatesType, Message, Chatroom, ChatroomResponse, MessageResponse } from "@/type";
+import * as Location from 'expo-location';
 
 export const appwriteConfig = {
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
@@ -69,14 +70,7 @@ export async function login() {
     }
 }
 
-export async function getLocation() {
 
-const locale = new Locale(client);
-
-const result = await locale.get();
-
-console.log(result);
-}
 export async function logout() {
     try {
         await account.deleteSession({
@@ -201,8 +195,7 @@ async function uploadImageToStorage(imageUrl: string) {
 export async function addItems({
     title,
     description,
-    latitude,
-    longitude,
+    location,
     category,
     image,
     eventDate,
@@ -229,8 +222,7 @@ export async function addItems({
                 user: userIdfromDb?.$id,
                 title,
                 description: description || undefined,
-                latitude,
-                longitude,
+                location    ,
                 category,
                 image: uploadedImage,
                 address: address,
@@ -259,10 +251,20 @@ export async function getItems({category, query, distance, userId}: {category?: 
         // Fixed: Search in title field instead of name\
         if (query) queries.push(Query.contains("title", query));
         
-
         if (userId) queries.push(Query.equal("user", [userId]));
 
-        console.log("Query:", queries);
+        // Update query to include distance
+        if (distance) {
+            const userLocation = await Location.getCurrentPositionAsync({});
+            const userLatitude = userLocation.coords.latitude;
+            const userLongitude = userLocation.coords.longitude;
+            if (!userLocation) return [];
+            const distanceInMeters = distance * 1609.34;
+            
+            queries.push(Query.distanceLessThan("location", [userLongitude, userLatitude], distanceInMeters, false));
+        }
+
+        console.log("Query:", userId);
         const items = await tablesDB.listRows({
             databaseId: appwriteConfig.databaseId!,
             tableId: appwriteConfig.itemsTableId!,

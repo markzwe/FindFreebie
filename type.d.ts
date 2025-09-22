@@ -1,7 +1,7 @@
 import { Models } from "react-native-appwrite";
 
 export interface User extends Models.Document {
-    accountId: string;
+    $id: string;
     name: string;
     email: string;
     avatar: string;
@@ -24,7 +24,7 @@ export interface AppwriteListResponse<T> {
     documents: T[];
 }
 
-export interface Item {
+export interface Item{
     title: string;
     $id: string;
     description?: string;
@@ -32,9 +32,8 @@ export interface Item {
     image: string;
     eventDate: Date;
     startTime?: Date;
-    latitude?: float;
-    longitude?: float;
     endTime?: Date;
+    location: [float, float];
     address: string;
     user: string; // User ID of the item creator
 }

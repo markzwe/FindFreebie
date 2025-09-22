@@ -16,16 +16,17 @@ import { Image } from "expo-image";
 import { useEffect, useState } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, Stack } from "expo-router";
+import { User } from "@/type";
 
 const Profile = () => {
-  const [userDB, setUserDB] = useState<any>(null);
+  const [userDB, setUserDB] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         const userData = await getUserFromDatabase();
-        setUserDB(userData);
+        setUserDB(userData as unknown as User);
       } catch (error) {
         console.error("Error fetching user data:", error);
       } finally {
@@ -44,18 +45,6 @@ const Profile = () => {
       Alert.alert('Error', 'Failed to logout. Please try again.');
     }
   };
-
-  // const renderStats = () => (
-  //   <View style={styles.statsContainer}>
-  //     {STATS.map((stat) => (
-  //       <View key={stat.id} style={styles.statItem}>
-     
-  //         <Text style={styles.statValue}>{stat.value}</Text>
-  //         <Text style={styles.statLabel}>{stat.label}</Text>
-  //       </View>
-  //     ))}
-  //   </View>
-  // );
 
   const renderActions = () => (
     <View style={[styles.actionsContainer, { justifyContent: 'center' }]}>
@@ -77,7 +66,7 @@ const Profile = () => {
           onPress={() => {
             router.push({
               pathname: '/(tabs)/(profile)/myListings',
-              params: { userID: userDB?._id }
+              params: { userID: userDB?.$id} 
             });
           }}
         >

@@ -19,6 +19,7 @@ interface ItemViewDetailModalProps {
 
 export default function ItemViewDetailModal({ item, isVisible, onClose }: ItemViewDetailModalProps) {
   const [user, setUser] = useState<User | null>(null);
+  const [userLocationCoordinates, setUserLocationCoordinates] = useState<CoordinatesType | null>(null);
   const [isSellerUser, setIsSellerUser] = useState<boolean>();
 
   const [seller, setSeller] = useState<User>({} as User);
@@ -28,45 +29,18 @@ export default function ItemViewDetailModal({ item, isVisible, onClose }: ItemVi
     const fetchUser = async () => {
       const userData = await getUserFromDatabase();
       setUser(userData as unknown as User);
+      setUserLocationCoordinates({
+        coordinates: {
+          latitude: userData?.latitude,
+          longitude: userData?.longitude
+        }
+      });
     };
     fetchUser();
   }, []);
-  const parseLocationCoordinates = (locationData: any): CoordinatesType | null => {
-    if (!locationData) return null;
-    
-    try {
-      let parsed = locationData;
-      
-      // Parse if it's a JSON string
-      if (typeof parsed === 'string') {
-        parsed = JSON.parse(parsed);
-      }
-      
-      // Parse coordinates if they're still a string
-      if (typeof parsed.coordinates === 'string') {
-        parsed.coordinates = JSON.parse(parsed.coordinates);
-      }
-      
-      // Validate the structure
-      if (parsed?.coordinates?.latitude && parsed?.coordinates?.longitude) {
-        return {
-          coordinates: {
-            latitude: parsed.coordinates.latitude,
-            longitude: parsed.coordinates.longitude,
-          }
-        };
-      }
-      
-      return null;
-    } catch (error) {
-      console.error('Error parsing location:', error);
-      return null;
-    }
-  };
+
   
-  
-  const locationCoordinates = parseLocationCoordinates(item.location);
-  const hasValidLocation = !!locationCoordinates;
+  const hasValidLocation = !!userLocationCoordinates;
   
   useEffect(() => {
     fetchSeller();
@@ -75,6 +49,7 @@ export default function ItemViewDetailModal({ item, isVisible, onClose }: ItemVi
     const sellerData = await getUserFromDatabase(item.user);
     setSeller(sellerData as unknown as User);
     setIsSellerUser(user?.$id === item.user);
+    console.log('Seller:', isSellerUser);
   };
   
   const formatDate = (date: Date | string) => {
@@ -218,11 +193,11 @@ export default function ItemViewDetailModal({ item, isVisible, onClose }: ItemVi
             <Text style={styles.sectionTitle}>Location</Text>
             {hasValidLocation ? (
               <View style={styles.locationContainer}>
-                <MapView location={locationCoordinates} viewOnly={true} />
+                <MapView location={userLocationCoordinates} viewOnly={true} />
                 <View style={styles.locationInfo}>
                   <Ionicons name="location-outline" size={20} color={COLORS.accent} />
                   <Text style={styles.locationText}>
-                    {address.postalCode}
+                    {address?.name ? `${address.name}, ${address.postalCode || ''}` : 'Location not available'}
                   </Text>
                 </View>
               </View>

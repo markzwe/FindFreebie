@@ -3,10 +3,9 @@ import React, { useState, useEffect } from 'react';
 import Slider from '@react-native-community/slider';
 import { COLORS, SPACING, RADIUS, FONT } from '@/constants/theme';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { router, useLocalSearchParams } from 'expo-router';
 
 interface DistanceChooserProps {
-  selectedDistance: number;
-  onDistanceChange: (distance: number) => void;
   visible: boolean;
   onClose: () => void;
 }
@@ -14,53 +13,28 @@ interface DistanceChooserProps {
 const { width } = Dimensions.get('window');
 
 export const DistanceChooser: React.FC<DistanceChooserProps> = ({
-  selectedDistance,
-  onDistanceChange,
+
   visible,
 }) => {
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [sliderValue, setSliderValue] = useState(selectedDistance);
-  const [isSliding, setIsSliding] = useState(false);
+  const [sliderValue, setSliderValue] = useState(0);
+  const params = useLocalSearchParams<{ distance?: string }>();
 
-  const distances = [
-    { label: 'All', value: 0 },
-    { label: '1 mi', value: 1 },
-    { label: '5 mi', value: 5 },
-    { label: '10 mi', value: 10 },
-    { label: '25 mi', value: 25 },
-    { label: '50 mi', value: 50 },
-    { label: '100 mi', value: 100 },
-    { label: '200 mi', value: 200 },
-  ];
+  // Local state for distance
+  const [distance, setDistance] = useState<number>(params.distance ? parseInt(params.distance) : 0);
 
-  // Update local state when selectedDistance prop changes
-  useEffect(() => {
-    setSliderValue(selectedDistance);
-  }, [selectedDistance]);
-
-  // Find the closest step in our distances array
-  const getClosestStep = (value: number) => {
-    return distances.reduce((prev, curr) => 
-      Math.abs(curr.value - value) < Math.abs(prev.value - value) ? curr : prev
-    ).value;
-  };
-
-  const handleValueChange = (value: number) => {
-    setSliderValue(value);
-  };
-
-  const handleSlidingComplete = (value: number) => {
-    // This is now handled directly in the Slider's onSlidingComplete
-  };
 
   const handleApply = () => {
-    onDistanceChange(sliderValue);
+    setDistance(sliderValue);
     setIsModalVisible(false);
+    if (sliderValue === 0) {
+      router.setParams({ distance: undefined });
+    } else {
+      router.setParams({ distance: sliderValue.toString() });
+    }
   };
 
-  const currentDistance = sliderValue === 0 ? 'All' : 
-    distances.find(d => d.value === sliderValue)?.label || 
-    `${Math.round(sliderValue)} mi`;
+  const currentDistance = sliderValue === 0 ? 'All' : `${sliderValue} mi`;
 
   if (!visible) return null;
 
@@ -99,30 +73,20 @@ export const DistanceChooser: React.FC<DistanceChooserProps> = ({
               </Text>
               <Slider
                 style={styles.slider}
-                minimumValue={0}
-                maximumValue={200}
+                minimumValue={0}  // Minimum distance
+                maximumValue={200} // Maximum distance
                 minimumTrackTintColor={COLORS.accent}
                 maximumTrackTintColor={COLORS.border}
                 thumbTintColor={COLORS.accent}
-                step={1}
-
+                step={1} // Allow smooth sliding
                 value={sliderValue}
-                onValueChange={handleValueChange}
-                onSlidingStart={() => setIsSliding(true)}
-                onSlidingComplete={(value) => {
-                  // Snap to 0 for 'All' when close to the left edge
-                  const step = value < 0.5 ? 0 : getClosestStep(value);
-                  setSliderValue(step);
-                  onDistanceChange(step);
-                  setIsSliding(false);
-                }}
+                onValueChange={ (value) => setSliderValue(value)}
+                onSlidingComplete={ (value) => setSliderValue(value)} // Snap to nearest value
               />
             </View>
             
             <View style={styles.distanceMarkers}>
-            
-                  <Text style={styles.markerText}>All</Text>
-             
+              <Text style={styles.markerText}>All</Text>
             </View>
 
             <TouchableOpacity 
