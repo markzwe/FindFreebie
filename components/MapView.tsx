@@ -9,7 +9,6 @@ interface MapViewProps {
 }
 
 export default function MapView({ location, setLocation, viewOnly = false }: MapViewProps) {
-  console.log('MapView location:', location);
   console.log('MapView coordinates:', location?.coordinates);
 
   const markerImage = require("../assets/images/Map_pin_icon_green.png");
@@ -105,8 +104,8 @@ export default function MapView({ location, setLocation, viewOnly = false }: Map
       
         circles={viewOnly && circle ? [circle] : undefined}
         markers={markers} 
-        onCameraMove={handleCameraMove}
-        onMapClick={handleMapClick}
+        onCameraMove={viewOnly ? undefined : handleCameraMove}
+        onMapClick={viewOnly ? undefined : handleMapClick}
         uiSettings={{
           myLocationButtonEnabled: viewOnly ? false : true,          
         }}

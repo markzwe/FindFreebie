@@ -8,7 +8,7 @@ import { TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'
 import MapView from './MapView'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { account, createChatRoom, getUserFromDatabase } from '@/lib/appwrite'
+import { account, addItems, createChatRoom, getUserFromDatabase } from '@/lib/appwrite'
 import { router } from 'expo-router'
 
 interface ItemViewDetailModalProps {
@@ -192,8 +192,9 @@ export default function ItemViewDetailModal({ item, isVisible, onClose }: ItemVi
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Location</Text>
             {hasValidLocation ? (
+              
               <View style={styles.locationContainer}>
-                <MapView location={userLocationCoordinates} viewOnly={true} />
+                <MapView location={item.location as unknown as CoordinatesType} viewOnly={true} />
                 <View style={styles.locationInfo}>
                   <Ionicons name="location-outline" size={20} color={COLORS.accent} />
                   <Text style={styles.locationText}>
