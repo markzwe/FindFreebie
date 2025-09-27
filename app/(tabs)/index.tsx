@@ -67,7 +67,7 @@ export default function Home() {
 
  
 
-  //
+  // 
   useEffect(() => {
     async function getCurrentLocation() {
         

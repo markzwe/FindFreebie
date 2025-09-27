@@ -36,6 +36,7 @@ export interface Item{
     location: [float, float];
     address: string;
     user: string; // User ID of the item creator
+    showLocationDetails?: boolean;
 }
 
 export interface CoordinatesType {

@@ -5,10 +5,12 @@ import { COLORS, SPACING } from '@/constants/theme';
 import { Image } from 'expo-image';
 import { TouchableOpacity } from 'react-native';
 import ItemViewDetailModal from './ItemViewDetail';
+import { Button, ContextMenu, Host, Picker } from '@expo/ui/swift-ui';
 
 export default function ItemCard({item}: {item: Item}) {
   const [isViewDetailModalVisible, setIsViewDetailModalVisible] = React.useState(false);
-  
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+    
   const handleViewDetail = () => {
     setIsViewDetailModalVisible(true);
   }

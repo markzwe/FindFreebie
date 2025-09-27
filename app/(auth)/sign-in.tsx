@@ -27,7 +27,7 @@ export default function SignIn() {
     try {
       const session = await login();
       // TODO: Replace 'true' with 'session' after appwrite upgrade
-      if (true) {
+      if (session) {
         router.replace('/(auth)/permissions');
       } else {
         Alert.alert('Error', 'Failed to sign in. Please try again.');

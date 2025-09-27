@@ -154,6 +154,7 @@ export default function AddItem() {
       address: JSON.stringify(address) as string,
       description: description.trim() || undefined,
       location: [userLocation?.coordinates?.longitude, userLocation?.coordinates?.latitude],
+      showLocationDetails: showPreciseLocation,
       category: category, // This will be mapped to 'category' in the database
       image: selectedImage,
       eventDate: date,
@@ -187,6 +188,7 @@ export default function AddItem() {
           postalCode: ""
         });
         setUserLocation(null);
+        setShowPreciseLocation(false);
         
         router.replace("/");
       } else {

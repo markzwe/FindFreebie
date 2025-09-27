@@ -1,22 +1,27 @@
-import { CoordinatesType } from "@/type";
 import { AppleMaps } from "expo-maps";
 import React from "react";
-import { Image, StyleSheet, View } from "react-native";
-interface MapViewProps {
-  location: CoordinatesType | null;
-  setLocation?: (location: CoordinatesType) => void;
-  viewOnly?: boolean;
+import { StyleSheet, View, TouchableOpacity, Alert, Platform, Text, Image } from 'react-native';
+
+// Define the Coordinates type that matches expo-maps expectations
+type Coordinates = {
+  latitude?: number;
+  longitude?: number;
 }
 
+interface MapViewProps {
+  location?: {
+    coordinates: Coordinates;
+  } | null;
+  setLocation?: (location: { coordinates: Coordinates }) => void;
+  viewOnly?: boolean;
+}
 export default function MapView({ location, setLocation, viewOnly = false }: MapViewProps) {
   console.log('MapView coordinates:', location?.coordinates);
 
-  const markerImage = require("../assets/images/Map_pin_icon_green.png");
+  // Use require with type assertion for the image
+  const markerImage = require('../assets/images/Map_pin_icon_green.png') as number;
   const handleCameraMove = (event: { 
-    coordinates: {
-      latitude?: number;
-      longitude?: number;
-    }; 
+    coordinates: Coordinates; 
     zoom: number; 
     tilt: number; 
     bearing: number; 
@@ -25,7 +30,7 @@ export default function MapView({ location, setLocation, viewOnly = false }: Map
       const { latitude, longitude } = event.coordinates;
       
       if (latitude !== undefined && longitude !== undefined) {
-        const newLocation: CoordinatesType = {
+        const newLocation = {
           coordinates: {
             latitude,
             longitude
@@ -40,10 +45,7 @@ export default function MapView({ location, setLocation, viewOnly = false }: Map
   };
 
   const handleMapClick = (event: { 
-    coordinates: {
-      latitude?: number;
-      longitude?: number;
-    } 
+    coordinates: Coordinates 
   }) => {
     if (!viewOnly && setLocation) {
       const { latitude, longitude } = event.coordinates;
@@ -58,19 +60,29 @@ export default function MapView({ location, setLocation, viewOnly = false }: Map
     }
   };
 
-  // Default coordinates (San Francisco) if no location provided
-  const defaultCoordinates = {
-    latitude: 37.78825,
-    longitude: -122.4324,
-  };
 
-  const mapCoordinates = location?.coordinates ? {
-    latitude: location.coordinates.latitude,
-    longitude: location.coordinates.longitude,
-  } : defaultCoordinates;
+
+  // Safely get coordinates with proper type checking
+  const mapCoordinates = location?.coordinates && 
+    typeof location.coordinates.latitude === 'number' && 
+    typeof location.coordinates.longitude === 'number'
+    ? {
+        latitude: location.coordinates.latitude,
+        longitude: location.coordinates.longitude
+      }
+    : null;
+
+  // If no valid coordinates, don't render the map
+  if (!mapCoordinates || (mapCoordinates.latitude === 0 && mapCoordinates.longitude === 0)) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text>No location available</Text>
+      </View>
+    );
+  }
 
   // Only show markers when not in view-only mode
-  const markers = !viewOnly && location?.coordinates ? [{
+  const markers = !viewOnly && mapCoordinates ? [{
     coordinates: mapCoordinates,
   }] : undefined;
 
@@ -92,6 +104,7 @@ export default function MapView({ location, setLocation, viewOnly = false }: Map
     
   } : undefined;
 
+  console.log(mapCoordinates);
   return (
     <View style={styles.container}>
       <AppleMaps.View 
@@ -100,10 +113,7 @@ export default function MapView({ location, setLocation, viewOnly = false }: Map
           coordinates: mapCoordinates,
           zoom: viewOnly ? 15.7 : 17.5
         }}
-        // circles={viewOnly && circle ? [circle] : undefined}
-        // markers={markers} 
-        circles={viewOnly ? [{
-          id: 'myCircle1',
+        circles={ viewOnly ? [{
           center: mapCoordinates,
           radius: 300, // 1km radius
           color: 'rgba(0, 4, 255, 0.4)',

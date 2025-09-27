@@ -40,6 +40,7 @@ const Profile = () => {
   const handleLogout = async () => {
     try {
       await logout();
+      router.replace('/(auth)/sign-in');
       Alert.alert('Logged Out', 'You have been successfully logged out.');
     } catch (error) {
       Alert.alert('Error', 'Failed to logout. Please try again.');

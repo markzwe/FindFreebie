@@ -1,11 +1,10 @@
-import { Account, Client, OAuthProvider, Databases, Avatars, ID, TablesDB, Query, Locale, Storage, Models } from "react-native-appwrite";
+import { Account, Avatars, Client, Databases, ID, OAuthProvider, Query, Storage, TablesDB } from "react-native-appwrite";
 
+import { Chatroom, ChatroomResponse, Item, MessageResponse } from "@/type";
+import { makeRedirectUri } from 'expo-auth-session';
 import * as Linking from "expo-linking";
-import { openAuthSessionAsync } from "expo-web-browser";
-import { makeRedirectUri } from 'expo-auth-session'
-import * as WebBrowser from 'expo-web-browser';
-import { Item, CoordinatesType, Message, Chatroom, ChatroomResponse, MessageResponse } from "@/type";
 import * as Location from 'expo-location';
+import * as WebBrowser from 'expo-web-browser';
 
 export const appwriteConfig = {
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
@@ -258,13 +257,12 @@ export async function getItems({category, query, distance, userId}: {category?: 
             const userLocation = await Location.getCurrentPositionAsync({});
             const userLatitude = userLocation.coords.latitude;
             const userLongitude = userLocation.coords.longitude;
-            if (!userLocation) return [];
+            if (!userLocation) return console.log("User location not found");
             const distanceInMeters = distance * 1609.34;
-            
-            queries.push(Query.distanceLessThan("location", [userLongitude, userLatitude], distanceInMeters, false));
+            queries.push(Query.distanceLessThan("location", [userLongitude, userLatitude], distanceInMeters, true));
         }
 
-        console.log("Query:", userId);
+        console.log("Queries:", queries);
         const items = await tablesDB.listRows({
             databaseId: appwriteConfig.databaseId!,
             tableId: appwriteConfig.itemsTableId!,
@@ -287,7 +285,19 @@ export async function getItems({category, query, distance, userId}: {category?: 
         return [];
     }
 }
-
+export async function deleteItem(itemId: string) {
+    try {
+        await tablesDB.deleteRow({
+            databaseId: appwriteConfig.databaseId!,
+            tableId: appwriteConfig.itemsTableId!,
+            rowId: itemId
+        });
+        return true;
+    } catch (error) {
+        console.log("Error deleting item:", error);
+        return false;
+    }
+}
 export async function createChatRoom({itemId, sellerId, buyerId}: {itemId: string, sellerId: string, buyerId: string}) {
     try {
         const user = await getCurrentUser();

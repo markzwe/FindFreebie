@@ -13,6 +13,7 @@
   "dependencies": {
     "@auth/core": "^0.37.0",
     "@expo/metro-runtime": "~6.1.2",
+    "@expo/ui": "~0.2.0-beta.4",
     "@expo/vector-icons": "^15.0.2",
     "@legendapp/list": "^2.0.4",
     "@react-native-community/datetimepicker": "8.4.4",
