@@ -164,7 +164,7 @@ const Profile = () => {
         </View>
         <View style={styles.bottomContainer}>
   <Image 
-    source={require('../../../assets/images/logo.png')}
+    source={require('../../../assets/images/icon.png')}
     style={styles.appIcon}
     contentFit="cover"
   />

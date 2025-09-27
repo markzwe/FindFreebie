@@ -450,7 +450,9 @@ export default function AddItem() {
               </View>
 
               {userLocation && (
-                <MapView location={userLocation} viewOnly={false}  setLocation={setUserLocation}/>
+                <View style={styles.mapContainer}>
+                  <MapView location={userLocation} viewOnly={false}  setLocation={setUserLocation}/>
+                </View>
               )}
             </View>
           </View>

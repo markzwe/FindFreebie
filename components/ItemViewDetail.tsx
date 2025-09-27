@@ -192,14 +192,19 @@ export default function ItemViewDetailModal({ item, isVisible, onClose }: ItemVi
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Location</Text>
             {hasValidLocation ? (
-              
               <View style={styles.locationContainer}>
                 <MapView location={item.location as unknown as CoordinatesType} viewOnly={true} />
                 <View style={styles.locationInfo}>
-                  <Ionicons name="location-outline" size={20} color={COLORS.accent} />
-                  <Text style={styles.locationText}>
-                    {address?.name ? `${address.name}, ${address.postalCode || ''}` : 'Location not available'}
-                  </Text>
+                  <View style={styles.locationTextContainer}>
+                    <Ionicons name="location-outline" size={20} color={COLORS.accent} />
+                    <Text style={styles.locationText}>
+                      {address?.name ? `${address.name}, ${address.postalCode || ''}` : 'Location not available'}
+                    </Text>
+                  </View>
+                  <View style={styles.distanceContainer}>
+                    <Ionicons name="navigate-outline" size={16} color={COLORS.white} />
+                    <Text style={styles.distanceText}>200 miles away</Text>
+                  </View>
                 </View>
               </View>
             ) : (
@@ -364,9 +369,18 @@ const styles = StyleSheet.create({
   },
   locationInfo: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: COLORS.surface,
     padding: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+  },
+  locationTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: SPACING.md,
   },
   locationText: {
     fontSize: FONT.size.sm,
@@ -387,6 +401,22 @@ const styles = StyleSheet.create({
     fontSize: FONT.size.md,
     color: COLORS.textMuted,
     marginTop: SPACING.sm,
+  },
+  distanceContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.sm,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    backgroundColor: COLORS.accent,
+  },
+  distanceText: {
+    fontSize: FONT.size.sm,
+    color: COLORS.white,
+    marginLeft: SPACING.sm,
+    fontWeight: '500',
   },
   actionsSection: {
     position: 'absolute',

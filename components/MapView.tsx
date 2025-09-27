@@ -87,10 +87,9 @@ export default function MapView({ location, setLocation, viewOnly = false }: Map
   // In view-only mode, show a circle with a radius of 200 meters
   const circle = viewOnly && location?.coordinates ? {
     center: getOffsetCoordinates(mapCoordinates),
-    radius: 200, // 200 meters radius
-    fillColor: 'rgba(0, 122, 255, 0.2)',
-    strokeColor: 'rgba(49, 116, 187, 0.22))',
-    strokeWidth: 2,
+    radius: 1000, // 200 meters radius
+    color: 'rgba(168, 0, 0, 0.2)',
+    
   } : undefined;
 
   return (
@@ -99,11 +98,19 @@ export default function MapView({ location, setLocation, viewOnly = false }: Map
         style={styles.map}
         cameraPosition={{
           coordinates: mapCoordinates,
-          zoom: 17.5
+          zoom: viewOnly ? 15.7 : 17.5
         }}
-      
-        circles={viewOnly && circle ? [circle] : undefined}
-        markers={markers} 
+        // circles={viewOnly && circle ? [circle] : undefined}
+        // markers={markers} 
+        circles={viewOnly ? [{
+          id: 'myCircle1',
+          center: mapCoordinates,
+          radius: 300, // 1km radius
+          color: 'rgba(0, 4, 255, 0.4)',
+          lineWidth: 2,
+          lineColor: '#0000FF'
+        }] : undefined}
+        
         onCameraMove={viewOnly ? undefined : handleCameraMove}
         onMapClick={viewOnly ? undefined : handleMapClick}
         uiSettings={{
@@ -122,10 +129,9 @@ export default function MapView({ location, setLocation, viewOnly = false }: Map
 
 const styles = StyleSheet.create({
   container: {
-    height: 230,
+    height: 180,
     borderRadius: 12,
     overflow: "hidden",
-    marginTop: 16,
     position: 'relative',
   },
   map: {
