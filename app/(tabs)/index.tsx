@@ -67,7 +67,7 @@ export default function Home() {
 
  
 
-  // 
+  // Get user's current location
   useEffect(() => {
     async function getCurrentLocation() {
         

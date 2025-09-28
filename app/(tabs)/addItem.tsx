@@ -1,7 +1,7 @@
 // Fixed AddItem component with proper optional time handling
 import { COLORS, SPACING, RADIUS, FONT } from "@/constants/theme";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { router, useRouter } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -24,7 +24,7 @@ import DateTimePickerModal from "@/components/DateTimePickerModal";
 import DescriptionModal from "@/components/DescriptionModal";
 import MapView from "@/components/MapView";
 import * as Location from 'expo-location';
-import { CoordinatesType, AddressType, Item } from "@/type";
+import { AddressType, Coordinates, Item } from "@/type";
 import { account, addItems, getUserFromDatabase } from "@/lib/appwrite";
 import { ID } from "react-native-appwrite";
 
@@ -43,6 +43,7 @@ export default function AddItem() {
   // Switch
   const [showPreciseLocation, setShowPreciseLocation] = useState(false);
   const toggleSwitch = () => setShowPreciseLocation(previousState => !previousState);
+  console.log("showPreciseLocation", showPreciseLocation);
   
   // FIXED: Initialize times as undefined since they're optional
   const [startTime, setStartTime] = useState<Date | undefined>(undefined);
@@ -52,7 +53,7 @@ export default function AddItem() {
   const [isDescriptionModalVisible, setIsDescriptionModalVisible] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
   
-  const [userLocation, setUserLocation] = useState<CoordinatesType | null>(null);
+  const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [address, setAddress] = useState<AddressType>({
     name: "",
     postalCode: ""
@@ -79,10 +80,8 @@ export default function AddItem() {
 
         let location = await Location.getCurrentPositionAsync({});
         setUserLocation({
-          coordinates: {
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-          },
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
         });
       } catch (error) {
         console.log('Error getting location:', error);
@@ -95,11 +94,11 @@ export default function AddItem() {
   // FIXED: Get address from user location
   useEffect(() => {
     const getAddress = async () => {
-      if (userLocation?.coordinates?.latitude && userLocation?.coordinates?.longitude) {
+      if (userLocation?.latitude && userLocation?.longitude) {
         try {
           const reverseGeoCoding = await Location.reverseGeocodeAsync({
-            latitude: userLocation.coordinates.latitude,
-            longitude: userLocation.coordinates.longitude,
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
           });
           setAddress({
             name: reverseGeoCoding[0]?.name || reverseGeoCoding[0]?.street || "",
@@ -152,8 +151,8 @@ export default function AddItem() {
       $id: ID.unique(),
       title: title.trim(),
       address: JSON.stringify(address) as string,
-      description: description.trim() || undefined,
-      location: [userLocation?.coordinates?.longitude, userLocation?.coordinates?.latitude],
+      description: description.trim() || undefined, 
+      location: [userLocation?.longitude, userLocation?.latitude],
       showLocationDetails: showPreciseLocation,
       category: category, // This will be mapped to 'category' in the database
       image: selectedImage,
@@ -172,8 +171,6 @@ export default function AddItem() {
       });
 
       if (result) {
-        console.log("Item created successfully:", result);
-        
         // Reset form
         setTitle("");
         setDescription("");
@@ -189,8 +186,6 @@ export default function AddItem() {
         });
         setUserLocation(null);
         setShowPreciseLocation(false);
-        
-        router.replace("/");
       } else {
         console.log("Failed to create item");
       }
@@ -198,6 +193,7 @@ export default function AddItem() {
       console.error("Error sharing item:", error);
     } finally {
       setIsSharing(false);
+      router.push("/");
     }
   };
 
@@ -437,7 +433,7 @@ export default function AddItem() {
                 <View style={styles.locationSwitchContainer}>
                 <Text style={styles.locationText}>Show precise location</Text>
                 <Switch
-                disabled={isSharing}
+                  disabled={isSharing}
                   trackColor={{ false: COLORS.white, true: COLORS.accent }}
                   thumbColor={ COLORS.white}
                   ios_backgroundColor={COLORS.white}
@@ -453,7 +449,11 @@ export default function AddItem() {
 
               {userLocation && (
                 <View style={styles.mapContainer}>
-                  <MapView location={userLocation} viewOnly={false}  setLocation={setUserLocation}/>
+                  <MapView 
+                    location={{ coordinates: userLocation }} 
+                    viewOnly={false}  
+                    setLocation={(newLocation) => setUserLocation(newLocation.coordinates)}
+                  />
                 </View>
               )}
             </View>

@@ -1,12 +1,8 @@
-import { AppleMaps } from "expo-maps";
+import { AppleMaps, Coordinates } from "expo-maps";
 import React from "react";
 import { StyleSheet, View, TouchableOpacity, Alert, Platform, Text, Image } from 'react-native';
 
 // Define the Coordinates type that matches expo-maps expectations
-type Coordinates = {
-  latitude?: number;
-  longitude?: number;
-}
 
 interface MapViewProps {
   location?: {

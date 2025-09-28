@@ -200,6 +200,7 @@ export async function addItems({
     eventDate,
     startTime,
     endTime,
+    showLocationDetails,
     address
 }: Item) {
     try {
@@ -228,7 +229,8 @@ export async function addItems({
                 eventDate: eventDate.toISOString(),
                 startTime: startTime?.toISOString(),
                 endTime: endTime?.toISOString(),
-            }
+                showLocationDetails,
+                }
         });
         
         console.log("New item created in database:", newItem);

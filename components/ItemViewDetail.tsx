@@ -6,7 +6,7 @@ import { Alert, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Types
-import { AddressType, CoordinatesType, Item, User } from '@/type';
+import { AddressType, Item, User } from '@/type';
 
 import MapView from './MapView';
 
@@ -30,7 +30,7 @@ interface ItemViewDetailModalProps {
 interface ModalState {
   user: User | null;
   seller: User | null;
-  userLocationCoordinates: CoordinatesType | null;
+  userLocationCoordinates: Coordinates | null;
   isLoading: boolean;
   error: string | null;
 }
@@ -91,10 +91,8 @@ const ItemViewDetailModal: React.FC<ItemViewDetailModalProps> = ({
         ...prev,
         user: userData as unknown as User,
         userLocationCoordinates: userData.latitude && userData.longitude ? {
-          coordinates: {
-            latitude: userData.latitude,
-            longitude: userData.longitude
-          }
+          latitude: userData.latitude,
+          longitude: userData.longitude
         } : null,
         isLoading: false,
       }));
@@ -251,7 +249,7 @@ const ItemViewDetailModal: React.FC<ItemViewDetailModalProps> = ({
           )}
 
           <LocationSection
-            location={item.location as unknown as CoordinatesType}
+            location={item.location as unknown as Coordinates}
             locationText={locationDisplayText} 
           />
         </ScrollView>

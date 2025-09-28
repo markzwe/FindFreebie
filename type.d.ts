@@ -39,12 +39,12 @@ export interface Item{
     showLocationDetails?: boolean;
 }
 
-export interface CoordinatesType {
-    coordinates: {
-        latitude: float;
-        longitude: float;
-    }
-}
+
+export type Coordinates = {
+    latitude?: number;
+    longitude?: number;
+  }
+  
 
 export interface AddressType {
     name: string;
