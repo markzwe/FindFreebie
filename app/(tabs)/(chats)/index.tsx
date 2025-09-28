@@ -1,11 +1,15 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, SafeAreaView, RefreshControl, ActivityIndicator } from 'react-native'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, RefreshControl, ActivityIndicator } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { Link, useRouter } from 'expo-router';
 import { COLORS, SPACING, FONT } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { getChatRooms, tablesDB, appwriteConfig, getUserFromDatabase } from '@/lib/appwrite';
 import { Chatroom } from '@/type';
-import { useAppwrite } from '@/lib/useAppwrite';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 export default function Chat() {
   const router = useRouter();
@@ -107,25 +111,29 @@ export default function Chat() {
    }
   return (
     <SafeAreaView style={styles.container}> 
-    <FlatList
-      contentContainerStyle={styles.overlay}
-      stickyHeaderIndices={[0]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchChatRooms} />}
-      ListHeaderComponent={
-        <View style={[styles.header]}>
-
-        <Link href="/profile">
+       <View style={[styles.header]}>
+        <TouchableOpacity onPress={() => {router.push('/(tabs)/(profile)')}}>
         <Image
           source={{ uri: userDB?.avatar || undefined}}
           style={styles.avatar}
         />
-        </Link>
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Messages</Text>
         <View style={styles.headerRight}/>
       </View>
-      }
-      data={chatRooms ?? []}
+    <FlatList
+      contentContainerStyle={styles.overlay}
+      stickyHeaderIndices={[0]}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchChatRooms} />}
+      data={chatRooms}
       renderItem={({ item, index }) => (
+        <GestureHandlerRootView>
+          <ReanimatedSwipeable
+          containerStyle={styles.swipeable}
+          friction={2}
+          enableTrackpadTwoFingerGesture
+          rightThreshold={40}
+          >
         <TouchableOpacity style={styles.chatroomItem} onPress={() => {handleChatroomPress(item, index)}} activeOpacity={0.8}>
           <Image
             source={{ uri: item.itemImage || undefined }}
@@ -143,7 +151,8 @@ export default function Chat() {
             <Ionicons name="chevron-forward" size={24} color="black" />
           </View>
         </TouchableOpacity>
-        
+        </ReanimatedSwipeable>
+        </GestureHandlerRootView>
         )}
       keyExtractor={(item) => item.$id}
       contentInsetAdjustmentBehavior='automatic'
