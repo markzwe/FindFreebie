@@ -157,9 +157,9 @@ const ItemViewDetailModal: React.FC<ItemViewDetailModalProps> = ({
         throw new Error('Failed to create chat room');
       }
 
-      onClose();
       
-      router.replace({
+      onClose();
+      router.push({
         pathname: '/(tabs)/(chats)/ChatScreen',
         params: { chatroomId },
       });

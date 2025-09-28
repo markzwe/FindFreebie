@@ -304,6 +304,19 @@ export async function createChatRoom({itemId, sellerId, buyerId}: {itemId: strin
         if (!user) {
             throw new Error('User not authenticated');
         }
+        //TODO: Check if chat room already exists
+        const chatRoom = await tablesDB.listRows({
+            databaseId: appwriteConfig.databaseId!,
+            tableId: appwriteConfig.chatRoomTableId!,
+            queries: [
+                Query.equal("item", [itemId]),
+                Query.equal("seller", [sellerId]),
+                Query.equal("buyer", [buyerId])
+            ]
+        });
+        if (chatRoom.rows.length > 0) {
+            return chatRoom.rows[0].$id;
+        }
         const Id = ID.unique();
         await tablesDB.createRow({
             databaseId: appwriteConfig.databaseId!,
