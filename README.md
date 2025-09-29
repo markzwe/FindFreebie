@@ -110,5 +110,3 @@ For detailed documentation, please see the [docs](./docs/) directory:
 
 - [Expo](https://expo.dev/)
 - [Appwrite](https://appwrite.io/)
-- [React Native Paper](https://reactnativepaper.com/)
-- [React Navigation](https://reactnavigation.org/)
