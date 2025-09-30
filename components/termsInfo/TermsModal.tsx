@@ -19,8 +19,8 @@ export default function TermsModal({visible, onClose}: TermsModalProps) {
     >
       <Animated.View 
         style={styles.modalContainer}
-        entering={FadeIn.duration(200)}
-        exiting={FadeOut.duration(200)}
+        // entering={FadeIn.duration(200)}
+        // exiting={FadeOut.duration(200)}
       >
         <View style={styles.modalContent}>
           <View style={styles.header}>
@@ -29,8 +29,11 @@ export default function TermsModal({visible, onClose}: TermsModalProps) {
               style={styles.closeButton}
               onPress={onClose}
               activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="close" size={24} color={COLORS.textInverse} />
+              <View style={styles.closeButtonCircle}>
+                <Ionicons name="close" size={20} color={COLORS.textInverse} />
+              </View>
             </TouchableOpacity>
           </View>
           
@@ -210,15 +213,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
+    height: '100%',
   },
   modalContent: {
     backgroundColor: COLORS.background,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '90%',
+    flex: 1,
   },
   header: {
-    padding: 20,
+    paddingLeft: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -229,7 +234,15 @@ const styles = StyleSheet.create({
     color: COLORS.text,
   },
   closeButton: {
-    padding: 4,
+    padding: 8,
+  },
+  closeButtonCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   divider: {
     height: 1,
@@ -242,6 +255,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
+    flexGrow: 1,
   },
   bodyText: {
     fontSize: 15,

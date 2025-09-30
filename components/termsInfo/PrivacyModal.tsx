@@ -19,8 +19,8 @@ export default function PrivacyModal({visible, onClose}: PrivacyPolicyModalProps
     >
       <Animated.View 
         style={styles.modalContainer}
-        entering={FadeIn.duration(200)}
-        exiting={FadeOut.duration(200)}
+        // entering={FadeIn.duration(200)}
+        // exiting={FadeOut.duration(200)}
       >
         <View style={styles.modalContent}>
           <View style={styles.header}>
@@ -29,8 +29,11 @@ export default function PrivacyModal({visible, onClose}: PrivacyPolicyModalProps
               style={styles.closeButton}
               onPress={onClose}
               activeOpacity={0.7}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Ionicons name="close" size={24} color={COLORS.textInverse} />
+              <View style={styles.closeButtonCircle}>
+                <Ionicons name="close" size={20} color={COLORS.textInverse} />
+              </View>
             </TouchableOpacity>
           </View>
           
@@ -41,33 +44,6 @@ export default function PrivacyModal({visible, onClose}: PrivacyPolicyModalProps
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-              marginBottom: 4,
-              letterSpacing: -0.5
-            }}>
-              Privacy Policy
-            </Text>
-            <Text style={{ 
-              fontSize: 14, 
-              color: 'rgba(255, 255, 255, 0.7)',
-              fontWeight: '500'
-            }}>
-              Last Updated June 11, 2025
-            </Text>
-          </View>
-
-            <TouchableOpacity style={{ marginTop: 4 }} onPress={onClose}>
-              <Ionicons name='chevron-down' color={COLORS.white} size={23} />
-            </TouchableOpacity>
-        </View>
-
-        <ScrollView 
-          contentContainerStyle={{ 
-            padding: 24,
-            paddingBottom: 40
-          }}
-          showsVerticalScrollIndicator={false}
-          style={{ backgroundColor: COLORS.black }}
-        >
           <Text style={styles.bodyText}>
             This Privacy Policy explains how Codec ("we," "us," or "our") collects, uses, stores, and shares ("processes") your personal information when you access or use our services ("Services"), including but not limited to when you:{"\n\n"}
             
@@ -341,38 +317,84 @@ export default function PrivacyModal({visible, onClose}: PrivacyPolicyModalProps
           <Text style={styles.bodyText}>
             You have the right to request access to the personal information we collect from you, details about how we have processed it, correct inaccuracies, or delete your personal information. You may also have the right to withdraw your consent to our processing of your personal information. These rights may be limited in some circumstances by applicable law. To request to review, update, or delete your personal information, please fill out and submit a data subject access request.
           </Text>
-
         </ScrollView>
-            </ScrollView>
-        </View>
-      </Animated.View>
-    </Modal>
+      </View>
+    </Animated.View>
+  </Modal>
   );
 }
 
 const styles = StyleSheet.create({
+  modalContainer: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    justifyContent: 'flex-end',
+    height: '100%',
+  },
+  modalContent: {
+    backgroundColor: COLORS.background,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    maxHeight: '90%',
+    flex: 1,
+  },
+  header: {
+    paddingLeft: 20,
+    paddingRight: 12,
+    paddingVertical: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  title: {
+    fontSize: 20,
+    fontFamily: FONT.family.bold,
+    color: COLORS.text,
+  },
+  closeButton: {
+    padding: 8,
+  },
+  closeButtonCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.border,
+    marginHorizontal: 20,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40,
+    flexGrow: 1,
+  },
   bodyText: {
     fontSize: 15,
     lineHeight: 22,
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: COLORS.text,
     marginBottom: 20,
-    fontWeight: '400',
+    fontFamily: FONT.family.regular,
   },
   sectionHeader: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginTop: 28,
-    marginBottom: 16,
-    letterSpacing: -0.3,
+    fontFamily: FONT.family.bold,
+    color: COLORS.text,
+    marginTop: 24,
+    marginBottom: 12,
   },
   subsectionHeader: {
     fontSize: 16,
-    fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.9)',
+    fontFamily: FONT.family.bold,
+    color: COLORS.text,
     marginTop: 20,
     marginBottom: 12,
-    letterSpacing: -0.2,
   },
   bulletContainer: {
     marginLeft: 8,
@@ -380,10 +402,10 @@ const styles = StyleSheet.create({
   },
   bulletPoint: {
     fontSize: 15,
-    lineHeight: 20,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 4,
-    fontWeight: '400',
+    lineHeight: 22,
+    color: COLORS.textMuted,
+    marginBottom: 6,
+    fontFamily: FONT.family.regular,
   },
   dataCategories: {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',

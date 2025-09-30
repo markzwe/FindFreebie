@@ -18,9 +18,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, Stack } from "expo-router";
 import { User } from "@/type";
 import Constants from 'expo-constants';
+import TermsModal from "@/components/termsInfo/TermsModal";
+import PrivacyModal from "@/components/termsInfo/PrivacyModal";
 const Profile = () => {
   const [userDB, setUserDB] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [termsModalVisible, setTermsModalVisible] = useState(false);
+  const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -102,7 +106,13 @@ const Profile = () => {
   const renderSettings = () => (
     <View style={styles.settingsContainer}>
       {SETTINGS.map((setting) => (
-        <TouchableOpacity key={setting.id} style={styles.settingItem}>
+        <TouchableOpacity key={setting.id} style={styles.settingItem} onPress={() => {
+          if (setting.id === '3') {
+            setTermsModalVisible(true);
+          } else if (setting.id === '4') {
+            setPrivacyModalVisible(true);
+          }
+        }}>
           <View style={styles.settingLeft}>
             <Ionicons name={setting.icon as any} size={24} color={COLORS.text} />
             <Text style={styles.settingText}>{setting.title}</Text>
@@ -174,6 +184,8 @@ const Profile = () => {
   <Text style={styles.madeWithText}>Made with ❤️ in Dayton</Text>
 </View>
       </ScrollView>
+      <TermsModal visible={termsModalVisible} onClose={() => setTermsModalVisible(false)} />
+      <PrivacyModal visible={privacyModalVisible} onClose={() => setPrivacyModalVisible(false)} />
     </View>
     </>
   );
