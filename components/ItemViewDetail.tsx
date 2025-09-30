@@ -261,7 +261,7 @@ const ItemViewDetailModal: React.FC<ItemViewDetailModalProps> = ({
               onPress={handleDelete}
             >
               <Ionicons name="trash" size={24} color={COLORS.white} />
-              <Text style={styles.deleteButtonText}>Delete</Text>
+              <Text style={styles.deleteButtonText}>Delete Listing</Text>
             </TouchableOpacity>
           </View>
         )}

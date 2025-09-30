@@ -1,19 +1,17 @@
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image, RefreshControl, ActivityIndicator } from 'react-native'
-import React, { useEffect, useState } from 'react'
-import { Link, useRouter } from 'expo-router';
-import { COLORS, SPACING, FONT } from '@/constants/theme';
-import { Ionicons } from '@expo/vector-icons';
-import { getChatRooms, tablesDB, appwriteConfig, getUserFromDatabase } from '@/lib/appwrite';
+import { COLORS, FONT, SPACING } from '@/constants/theme';
+import { appwriteConfig, getChatRooms, getUserFromDatabase, tablesDB } from '@/lib/appwrite';
 import { Chatroom } from '@/type';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { FlatList, Image, RefreshControl, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
-import Swipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Reanimated, { SharedValue, useAnimatedStyle } from 'react-native-reanimated';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function Chat() {
   const router = useRouter();
-  
   const [chatRooms, setChatRooms] = useState<Array<Chatroom & { 
     sellerName?: string; 
     buyerName?: string;
@@ -82,6 +80,41 @@ export default function Chat() {
     }
   };
 
+  const handleDeleteChatroom = async (chatroomId: string) => {
+    try {
+      // Delete from your database
+      await tablesDB.deleteRow({
+        databaseId: appwriteConfig.databaseId!,
+        tableId: appwriteConfig.chatRoomTableId!, // Make sure this exists in your config
+        rowId: chatroomId
+      });
+      
+      // Update local state
+      setChatRooms(prev => prev.filter(room => room.$id !== chatroomId));
+    } catch (error) {
+      console.error('Error deleting chatroom:', error);
+    }
+  };
+
+  const RightAction = (chatroomId: string) => (prog: SharedValue<number>, drag: SharedValue<number>) => {
+    const styleAnimation = useAnimatedStyle(() => {
+      return {
+        transform: [{ translateX: drag.value - 65  }],
+      };
+    });
+    
+    return (
+      <Reanimated.View style={[styles.rightAction, styleAnimation]}>
+        <TouchableOpacity 
+          style={styles.deleteButton}
+          onPress={() => handleDeleteChatroom(chatroomId)}
+        >
+          <Ionicons name="trash-outline" size={24} color={COLORS.white} />
+        </TouchableOpacity>
+      </Reanimated.View>
+    );
+  };
+
   const fetchChatRooms = async () => {
     try {
       const response = await getChatRooms();
@@ -97,73 +130,85 @@ export default function Chat() {
   };
 
   useEffect(() => {
-    fetchChatRooms();
-  }, []);
-   const handleChatroomPress = (chatroom: Chatroom & { itemImage?: string | null }, index: number) => {
+    if (userDB) {
+      fetchChatRooms();
+    }
+  }, [userDB]);
+
+  const handleChatroomPress = (chatroom: Chatroom & { itemImage?: string | null }, index: number) => {
     router.push({
       pathname: "/(tabs)/(chats)/ChatScreen",
       params: {
         chatroomId: chatroom.$id,
         userData: userDB,
         itemImage: chatroom.itemImage,
-       },
+      },
     });
-   }
+  }
+
   return (
     <SafeAreaView style={styles.container}> 
-       <View style={[styles.header]}>
+      <View style={[styles.header]}>
         <TouchableOpacity onPress={() => {router.push('/(tabs)/(profile)')}}>
-        <Image
-          source={{ uri: userDB?.avatar || undefined}}
-          style={styles.avatar}
-        />
+          <Image
+            source={{ uri: userDB?.avatar || undefined}}
+            style={styles.avatar}
+          />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Messages</Text>
         <View style={styles.headerRight}/>
       </View>
-    <FlatList
-      contentContainerStyle={styles.overlay}
-      stickyHeaderIndices={[0]}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchChatRooms} />}
-      data={chatRooms}
-      renderItem={({ item, index }) => (
-        <GestureHandlerRootView>
-          <ReanimatedSwipeable
-          containerStyle={styles.swipeable}
-          friction={2}
-          enableTrackpadTwoFingerGesture
-          rightThreshold={40}
-          >
-        <TouchableOpacity style={styles.chatroomItem} onPress={() => {handleChatroomPress(item, index)}} activeOpacity={0.8}>
-          <Image
-            source={{ uri: item.itemImage || undefined }}
-            style={styles.chatroomAvatar}
-          />
-          <View style={styles.chatroomInfo}>
-            <Text style={styles.chatroomTitle} numberOfLines={1}>
-              {item.otherUserName || 'User'}
-            </Text>
-            <Text style={styles.chatroomSubtitle} numberOfLines={1}>
-              {item.itemTitle}
-            </Text>
-          </View>
-          <View>
-            <Ionicons name="chevron-forward" size={24} color="black" />
-          </View>
-        </TouchableOpacity>
-        </ReanimatedSwipeable>
-        </GestureHandlerRootView>
+      <FlatList
+        contentContainerStyle={styles.overlay}
+        stickyHeaderIndices={[0]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchChatRooms} />}
+        data={chatRooms}
+        renderItem={({ item, index }) => (
+          <GestureHandlerRootView>
+            <ReanimatedSwipeable
+              friction={2}
+              enableTrackpadTwoFingerGesture
+              leftThreshold={40}
+              renderLeftActions={RightAction(item.$id)}
+              rightThreshold={0}
+              renderRightActions={undefined}
+            >
+              <TouchableOpacity 
+                style={styles.chatroomItem} 
+                onPress={() => {handleChatroomPress(item, index)}} 
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={{ uri: item.itemImage || undefined }}
+                  style={styles.chatroomAvatar}
+                />
+                <View style={styles.chatroomInfo}>
+                  <View style={styles.chatroomTextContainer}>
+                    <Text style={styles.chatroomTitle} numberOfLines={1}>
+                      {item.otherUserName || 'User'}
+                    </Text>
+                    <Text style={styles.chatroomSubtitle} numberOfLines={1}>
+                      {item.itemTitle}
+                    </Text>
+                  </View>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color="black" />
+              </TouchableOpacity>
+            </ReanimatedSwipeable>
+          </GestureHandlerRootView>
         )}
-      keyExtractor={(item) => item.$id}
-      contentInsetAdjustmentBehavior='automatic'
-      ListEmptyComponent={
-      <View style={styles.emptyContainer}>
-        <Text style={styles.emptyText}>Uh oh! No messages found</Text>
-      </View>}
+        keyExtractor={(item) => item.$id}
+        contentInsetAdjustmentBehavior='automatic'
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>Uh oh! No messages found</Text>
+          </View>
+        }
       />
     </SafeAreaView>
   )
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -208,6 +253,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
+    backgroundColor: COLORS.background,
   },
   chatroomAvatar: {
     width: 50,
@@ -217,9 +263,9 @@ const styles = StyleSheet.create({
   },
   chatroomInfo: {
     flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  },
+  chatroomTextContainer: {
+    flex: 1,
   },
   chatroomTitle: {
     fontSize: FONT.size.md,
@@ -231,37 +277,7 @@ const styles = StyleSheet.create({
     fontSize: FONT.size.sm,
     color: COLORS.textMuted,
     letterSpacing: -0.2,
-    marginBottom: SPACING.sm,
   },
-  chatroomDescription: {
-    fontSize: FONT.size.sm,
-    color: COLORS.textMuted,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  chatroomTime: {
-    fontSize: FONT.size.xs,
-    color: COLORS.textMuted,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  chatroomUnreadCount: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: COLORS.danger,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chatroomUnreadCountText: {
-    fontSize: FONT.size.xs,
-    color: COLORS.white,
-    fontWeight: '600',
-  },
-
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -276,4 +292,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: SPACING.lg,
   },
-})
+  rightAction: {
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    paddingRight: SPACING.lg,
+  },
+  deleteButton: {
+    backgroundColor: COLORS.danger,
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: 70,
+    height: '100%',
+    borderRadius: 8,
+  },
+});

@@ -13,11 +13,11 @@ import { COLORS, SHADOW } from "@/constants/theme";
 import { getUserFromDatabase, logout } from "@/lib/appwrite";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
-import { useEffect, useState } from "react";
+import { useEffect, useState, version } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router, Stack } from "expo-router";
 import { User } from "@/type";
-
+import Constants from 'expo-constants';
 const Profile = () => {
   const [userDB, setUserDB] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -170,10 +170,8 @@ const Profile = () => {
     contentFit="cover"
   />
   <Text style={styles.appName}>Findfreebies</Text>
-  <Text style={styles.appVersion}>Version 1.0.0</Text>
-  <Text style={styles.madeWithText}>
-    Made with ❤️ in Dayton, Ohio
-  </Text>
+  <Text style={styles.appVersion}>Version {Constants.expoConfig?.version}</Text>
+  <Text style={styles.madeWithText}>Made with ❤️ in Dayton</Text>
 </View>
       </ScrollView>
     </View>

@@ -18,9 +18,13 @@ import { login } from '../../lib/appwrite';
 import { COLORS } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import TermsModal from '@/components/termsInfo/TermsModal';
+import PrivacyModal from '@/components/termsInfo/PrivacyModal';
 
 export default function SignIn() {
   const [isLoading, setIsLoading] = useState(false);
+  const [showTermsModal, setShowTermsModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
@@ -70,10 +74,12 @@ export default function SignIn() {
           </TouchableOpacity>
           
           <Text style={styles.termsText}>
-            By continuing, you agree to our Terms of Service and Privacy Policy
+            By continuing, you agree to our <Text style={styles.termsLink} onPress={() => setShowTermsModal(true)}>Terms of Service</Text> and <Text style={styles.termsLink} onPress={() => setShowPrivacyModal(true)}>Privacy Policy</Text>
           </Text>
         </View>
       </View>
+      <TermsModal visible={showTermsModal} onClose={() => setShowTermsModal(false)} />
+      <PrivacyModal visible={showPrivacyModal} onClose={() => setShowPrivacyModal(false)} />
     </SafeAreaView>
   );
 }
@@ -90,7 +96,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: 'center',
-    marginTop: 60,
+    justifyContent: 'center',
+    marginTop: 150,
   },
   logo: {
     width: 100,
@@ -152,4 +159,15 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 18,
   },
+  termsLink: {
+    color: COLORS.accent,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  privacyLink: {
+    color: COLORS.accent,
+    fontWeight: '600',
+    textDecorationLine: 'underline',
+  },
+  
 });
