@@ -10,14 +10,12 @@ export const appwriteConfig = {
     endpoint: process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT,
     platform: process.env.EXPO_PUBLIC_APPWRITE_PLATFORM,
     projectId: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID,
-    projectKey: process.env.EXPO_PUBLIC_APPWRITE_PROJECT_KEY,
     databaseId: process.env.EXPO_PUBLIC_APPWRITE_DATABASE_ID,
-    imagesTableId: process.env.EXPO_PUBLIC_APPWRITE_IMAGES_TABLE_ID,
-    userTableId: process.env.EXPO_PUBLIC_APPWRITE_USER_TABLE_ID,
-    itemsTableId: process.env.EXPO_PUBLIC_APPWRITE_ITEMS_TABLE_ID,
-    chatRoomTableId: process.env.EXPO_PUBLIC_APPWRITE_CHAT_ROOM_TABLE_ID,
+    userTableId: 'user',
+    itemsTableId: 'items',
+    chatRoomTableId: 'chatrooms',
     bucketId: process.env.EXPO_PUBLIC_APPWRITE_BUCKET_ID,
-    messagesTableId: process.env.EXPO_PUBLIC_APPWRITE_MESSAGES_TABLE_ID,
+    messagesTableId: 'messages',
 };
 export const client = new Client();
 client.setEndpoint(appwriteConfig.endpoint!);
@@ -28,43 +26,92 @@ export const account = new Account(client);
 export const databases = new Databases(client);
 export const avatar = new Avatars(client);
 export const tablesDB = new TablesDB(client);
-const deepLink = new URL(makeRedirectUri({ preferLocalhost: true }));
-const scheme = `${deepLink.protocol}//`;
 
 export async function login() {
+    // Build the redirect URI string at runtime so it reads from expo config
+    const deepLinkStr = makeRedirectUri({ preferLocalhost: true });
+    const redirectUri = Linking.createURL("/");
+
     try {
-        const redirectUri = Linking.createURL("/");
-        const response = account.createOAuth2Token(
-            {
-                provider: OAuthProvider.Google,
-                success: `${deepLink}`,
-                failure: `${deepLink}`,
+        // Try a few possible SDK methods to obtain an OAuth URL. Different Appwrite
+        // SDKs/expos may expose slightly different helper names or return shapes.
+        let authUrl: string | null = null;
+
+        // Some SDK versions expose createOAuth2Token which may return a URL or an object
+        if (typeof (account as any).createOAuth2Token === 'function') {
+            try {
+                const res = await Promise.resolve((account as any).createOAuth2Token({
+                    provider: OAuthProvider.Google,
+                    success: deepLinkStr,
+                    failure: deepLinkStr,
+                }));
+                if (typeof res === 'string') authUrl = res;
+                else if (res && typeof res === 'object') {
+                    // sometimes SDK returns { url: '...' } or similar
+                    authUrl = res.url || res.redirect || null;
+                }
+            } catch (e) {
+                // ignore and try other options
+                console.debug('createOAuth2Token attempt failed:', e);
             }
-        )
-
-        if (!response) {
-            throw new Error("Failed to create OAuth2 token");
         }
 
-        const browserResult  = await WebBrowser.openAuthSessionAsync(`${response}`, scheme);
-
-        if (browserResult.type !== "success") {
-            throw new Error("Failed to login");            
+        // Fallback: createOAuth2Session may be available in other SDK versions
+        if (!authUrl && typeof (account as any).createOAuth2Session === 'function') {
+            try {
+                const res = await Promise.resolve((account as any).createOAuth2Session(
+                    OAuthProvider.Google,
+                    deepLinkStr,
+                    deepLinkStr
+                ));
+                if (typeof res === 'string') authUrl = res;
+                else if (res && typeof res === 'object') authUrl = res.url || res.redirect || null;
+            } catch (e) {
+                console.debug('createOAuth2Session attempt failed:', e);
+            }
         }
-        const url = new URL((browserResult as any).url);
+
+        // Final fallback: try to build an auth URL from the Appwrite endpoint (best-effort)
+        if (!authUrl && appwriteConfig.endpoint && appwriteConfig.projectId) {
+            try {
+                const provider = 'google';
+                const base = appwriteConfig.endpoint.replace(/\/$/, '');
+                const succ = encodeURIComponent(deepLinkStr);
+                const fail = encodeURIComponent(deepLinkStr);
+                authUrl = `${base}/v1/account/sessions/oauth2/${provider}?project=${appwriteConfig.projectId}&success=${succ}&failure=${fail}`;
+            } catch (e) {
+                console.debug('manual auth URL build failed:', e);
+            }
+        }
+
+        if (!authUrl) throw new Error('Unable to obtain OAuth URL from SDK or build it');
+
+        const browserResult = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
+
+        if (browserResult.type !== 'success') {
+            console.warn('Auth session did not complete successfully', browserResult);
+            throw new Error('Failed to login');
+        }
+
+        const resultUrl = (browserResult as any).url || browserResult.url;
+        if (!resultUrl) throw new Error('No redirect URL returned from auth session');
+
+        const url = new URL(resultUrl);
         const secret = url.searchParams.get('secret')?.toString();
         const userId = url.searchParams.get('userId')?.toString();
         if (!secret || !userId) {
-            throw new Error("Failed to login");
+            throw new Error('Missing secret or userId in redirect URL');
         }
+
         const session = await account.createSession({ userId, secret });
         const user = await account.get();
+        // Create user in database if needed
         const dbUser = await createUser(user.name, user.email);
-        console.log("Login successful, user data:", dbUser);
+        console.log('Login successful, user data:', dbUser);
         return session;
 
     } catch (error) {
-        console.log(error);
+        console.error('login error:', error);
         return null;
     }
 }
@@ -81,6 +128,100 @@ export async function logout() {
         return false;
     }
 }
+
+export async function deleteAccount(userId: string) {
+    try {
+        // Ensure the current authenticated user matches the identityId
+        // const current = await getCurrentUser();
+        // if (!current || current.$id !== userId) {
+        //     throw new Error('Not authenticated as the target account');
+        // }
+
+        // Try to find the user's DB row (if any)
+        const dbId = appwriteConfig.databaseId!;
+
+        // Delete items created by the user
+        try {
+            const items = await tablesDB.listRows({
+                databaseId: dbId,
+                tableId: appwriteConfig.itemsTableId!,
+                queries: [Query.equal('user', [userId])]
+            });
+            for (const row of items.rows) {
+                await tablesDB.deleteRow({ databaseId: dbId, tableId: appwriteConfig.itemsTableId!, rowId: row.$id });
+            }
+        } catch (e) {
+            console.warn('Failed to delete user items:', e);
+        }
+
+        // Delete chatrooms where the user is seller or buyer
+        try {
+            const chatrooms = await tablesDB.listRows({
+                databaseId: dbId,
+                tableId: appwriteConfig.chatRoomTableId!,
+                queries: [Query.or([
+                    Query.equal('seller', [userId]),
+                    Query.equal('buyer', [userId])
+                ])]
+            });
+            for (const row of chatrooms.rows) {
+                await tablesDB.deleteRow({ databaseId: dbId, tableId: appwriteConfig.chatRoomTableId!, rowId: row.$id });
+            }
+        } catch (e) {
+            console.warn('Failed to delete chatrooms for user:', e);
+        }
+
+        // Delete messages sent by the user (best-effort)
+        try {
+            const messages = await tablesDB.listRows({
+                databaseId: dbId,
+                tableId: appwriteConfig.messagesTableId!,
+                queries: [Query.equal('senderId', [userId])]
+            });
+            for (const row of messages.rows) {
+                await tablesDB.deleteRow({ databaseId: dbId, tableId: appwriteConfig.messagesTableId!, rowId: row.$id });
+            }
+        } catch (e) {
+            console.warn('Failed to delete messages for user:', e);
+        }
+
+        // Delete the user DB row
+        try {
+            await tablesDB.deleteRow({ databaseId: dbId, tableId: appwriteConfig.userTableId!, rowId: userId });
+        } catch (e) {
+            console.warn('Failed to delete user DB row:', e);
+        }
+
+        // Finally delete the Appwrite account for the current user. Most client SDKs
+        // expose account.delete() for the current authenticated user.
+        if (typeof (account as any).delete === 'function') {
+            await (account as any).delete();
+        } else if (typeof (account as any).deleteAccount === 'function') {
+            await (account as any).deleteAccount();
+        } else if (typeof (account as any).deleteIdentity === 'function') {
+            // last-resort: if only deleteIdentity exists, try that
+            await (account as any).deleteIdentity({ userId });
+        } else {
+            throw new Error('No supported account deletion method available on the SDK');
+        }
+
+        return true;
+    } catch (error) {
+        console.error('deleteAccount error:', error);
+        return false;
+    }
+    finally {
+        // Ensure user is logged out locally
+        try {
+            await logout();
+        } catch (e) {
+            // ignore
+        }
+    }
+}
+
+
+
 export async function getCurrentUser() {
     try {
         const user = await account.get();

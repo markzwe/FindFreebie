@@ -46,6 +46,6 @@ export const settings = [
     // { id: '2', title: 'Help & Support', icon: 'help-circle-outline' },
     { id: '3', title: 'Terms & Conditions', icon: 'document-text-outline' },
     { id: '4', title: 'Privacy Policy', icon: 'lock-closed-outline' },
-    { id: '5', title: 'Account Settings', icon: 'settings-outline' },
+    // { id: '5', title: 'Account Settings', icon: 'settings-outline' },
   ];
   

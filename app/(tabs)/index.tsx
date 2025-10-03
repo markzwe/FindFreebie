@@ -14,7 +14,6 @@ import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import ItemCard from '@/components/ItemCard';
 import { Item } from '@/type';
-import { getDistanceFromLatLonInKm } from '@/utils/calculateDistance';
 import { DistanceChooser } from '@/components/DistanceChooser';
 
 // Add missing FONTS constant if not already defined in your theme

@@ -2,7 +2,7 @@ import { StyleSheet, Text, ScrollView, View, TouchableOpacity, Modal } from 'rea
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT } from '@/constants/theme';
-
+import React from 'react';
 type TermsModalProps = {
   visible: boolean;
   onClose: () => void;
@@ -10,21 +10,16 @@ type TermsModalProps = {
 
 export default function TermsModal({visible, onClose}: TermsModalProps) {
   return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      statusBarTranslucent={true}
-      onRequestClose={onClose}
-    >
-      <Animated.View 
-        style={styles.modalContainer}
-        // entering={FadeIn.duration(200)}
-        // exiting={FadeOut.duration(200)}
-      >
-        <View style={styles.modalContent}>
+        <Modal
+         visible={visible}
+         animationType="slide"
+         statusBarTranslucent={true}
+         onRequestClose={onClose}
+         presentationStyle='pageSheet'
+       >
+             <View style={styles.modalContainer}>
           <View style={styles.header}>
-            <Text style={styles.title}>Terms of Use</Text>
+            <Text style={styles.title}>Privacy Policy</Text>
             <TouchableOpacity 
               style={styles.closeButton}
               onPress={onClose}
@@ -37,10 +32,9 @@ export default function TermsModal({visible, onClose}: TermsModalProps) {
             </TouchableOpacity>
           </View>
           
-          <View style={styles.divider} />
-          
+           <View style={styles.divider} />
           <ScrollView 
-            style={styles.scrollView}
+          
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
@@ -203,7 +197,6 @@ export default function TermsModal({visible, onClose}: TermsModalProps) {
 
           </ScrollView>
         </View>
-      </Animated.View>
     </Modal>
   );
 }
@@ -211,19 +204,14 @@ export default function TermsModal({visible, onClose}: TermsModalProps) {
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
     justifyContent: 'flex-end',
-    height: '100%',
   },
-  modalContent: {
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '90%',
-    flex: 1,
-  },
+
   header: {
     paddingLeft: 20,
+    paddingRight: 12,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -240,7 +228,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: 'rgb(0, 0, 0)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -249,13 +237,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
     marginHorizontal: 20,
   },
-  scrollView: {
-    flex: 1,
-  },
+
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
-    flexGrow: 1,
   },
   bodyText: {
     fontSize: 15,

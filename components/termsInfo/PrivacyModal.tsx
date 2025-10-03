@@ -2,6 +2,7 @@ import { StyleSheet, Text, ScrollView, View, TouchableOpacity, Modal } from 'rea
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT } from '@/constants/theme';
+import React from 'react';
 type PrivacyPolicyModalProps = {
   visible: boolean;
   onClose: () => void;
@@ -13,36 +14,30 @@ export default function PrivacyModal({visible, onClose}: PrivacyPolicyModalProps
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={true}
-      statusBarTranslucent={true}
+      transparent={false}
+      statusBarTranslucent={false}
       onRequestClose={onClose}
+      presentationStyle='pageSheet'
     >
-      <Animated.View 
-        style={styles.modalContainer}
-        // entering={FadeIn.duration(200)}
-        // exiting={FadeOut.duration(200)}
+       <View style={styles.modalContainer}>
+    {/* Header - OUTSIDE ScrollView */}
+    <View style={styles.header}>
+      <Text style={styles.title}>Privacy Policy</Text>
+      <TouchableOpacity 
+        style={styles.closeButton}
+        onPress={onClose}
+        activeOpacity={0.7}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
-        <View style={styles.modalContent}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Privacy Policy</Text>
-            <TouchableOpacity 
-              style={styles.closeButton}
-              onPress={onClose}
-              activeOpacity={0.7}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            >
-              <View style={styles.closeButtonCircle}>
-                <Ionicons name="close" size={20} color={COLORS.textInverse} />
-              </View>
-            </TouchableOpacity>
-          </View>
-          
-          <View style={styles.divider} />
-          
+        <View style={styles.closeButtonCircle}>
+          <Ionicons name="close" size={20} color={COLORS.textInverse} />
+        </View>
+      </TouchableOpacity>
+    </View>
+    
+     <View style={styles.divider} />
           <ScrollView 
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
+            style={styles.scrollContent}
           >
           <Text style={styles.bodyText}>
             This Privacy Policy explains how Codec ("we," "us," or "our") collects, uses, stores, and shares ("processes") your personal information when you access or use our services ("Services"), including but not limited to when you:{"\n\n"}
@@ -318,8 +313,7 @@ export default function PrivacyModal({visible, onClose}: PrivacyPolicyModalProps
             You have the right to request access to the personal information we collect from you, details about how we have processed it, correct inaccuracies, or delete your personal information. You may also have the right to withdraw your consent to our processing of your personal information. These rights may be limited in some circumstances by applicable law. To request to review, update, or delete your personal information, please fill out and submit a data subject access request.
           </Text>
         </ScrollView>
-      </View>
-    </Animated.View>
+    </View>
   </Modal>
   );
 }
@@ -327,21 +321,14 @@ export default function PrivacyModal({visible, onClose}: PrivacyPolicyModalProps
 const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(255, 255, 255, 0.6)',
     justifyContent: 'flex-end',
-    height: '100%',
   },
-  modalContent: {
-    backgroundColor: COLORS.background,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    maxHeight: '90%',
-    flex: 1,
-  },
+
   header: {
     paddingLeft: 20,
     paddingRight: 12,
-    paddingVertical: 16,
+    paddingVertical: 10,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -358,7 +345,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: 'rgba(0, 0, 0, 0.1)',
+    backgroundColor: 'rgb(0, 0, 0)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -367,13 +354,10 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.border,
     marginHorizontal: 20,
   },
-  scrollView: {
-    flex: 1,
-  },
+
   scrollContent: {
     padding: 20,
     paddingBottom: 40,
-    flexGrow: 1,
   },
   bodyText: {
     fontSize: 15,

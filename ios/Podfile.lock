@@ -6,7 +6,7 @@ PODS:
   - EXImageLoader (6.0.0):
     - ExpoModulesCore
     - React-Core
-  - Expo (54.0.8):
+  - Expo (54.0.12):
     - ExpoModulesCore
     - hermes-engine
     - RCTRequired
@@ -31,13 +31,13 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ExpoAsset (12.0.8):
+  - ExpoAsset (12.0.9):
     - ExpoModulesCore
   - ExpoBlur (15.0.7):
     - ExpoModulesCore
   - ExpoCrypto (15.0.7):
     - ExpoModulesCore
-  - ExpoFileSystem (19.0.14):
+  - ExpoFileSystem (19.0.16):
     - ExpoModulesCore
   - ExpoFont (14.0.8):
     - ExpoModulesCore
@@ -63,7 +63,7 @@ PODS:
     - ExpoModulesCore
   - ExpoMaps (0.12.7):
     - ExpoModulesCore
-  - ExpoModulesCore (3.0.16):
+  - ExpoModulesCore (3.0.20):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -2475,11 +2475,11 @@ SPEC CHECKSUMS:
   EXApplication: 296622817d459f46b6c5fe8691f4aac44d2b79e7
   EXConstants: a95804601ee4a6aa7800645f9b070d753b1142b3
   EXImageLoader: 189e3476581efe3ad4d1d3fb4735b7179eb26f05
-  Expo: 4875e1cc72ae1398e33bcd6632943a4e93926ecd
-  ExpoAsset: 84810d6fed8179f04d4a7a4a6b37028bbd726e26
+  Expo: 24375439ae3be9e01cdd3ab8e03967d453e66d3e
+  ExpoAsset: 9ba6fbd677fb8e241a3899ac00fa735bc911eadf
   ExpoBlur: 2dd8f64aa31f5d405652c21d3deb2d2588b1852f
   ExpoCrypto: c1fbce112d1b6b79652bbe380b4fd4cc91676595
-  ExpoFileSystem: 4fb06865906e781329eb67166bd64fc4749c3019
+  ExpoFileSystem: f4bf6bac4ede3b6671c22777f01102a02a028412
   ExpoFont: 86ceec09ffed1c99cfee36ceb79ba149074901b5
   ExpoHaptics: 807476b0c39e9d82b7270349d6487928ce32df84
   ExpoHead: 78f14a8573ae5b882123b272c0af20a80bfa58f6
@@ -2489,7 +2489,7 @@ SPEC CHECKSUMS:
   ExpoLinking: f051f28e50ea9269ff539317c166adec81d9342d
   ExpoLocation: 93d7faa0c2adbd5a04686af0c1a61bc6ed3ee2f7
   ExpoMaps: 658ae7ad63fd54b2237e590bf1e87bf600ae8ad4
-  ExpoModulesCore: a28d1b4a5a9fbdacc41ca8d0c777a2d73496b022
+  ExpoModulesCore: e646280de9e06297a3668c568ddc6b8564fa2896
   ExpoSplashScreen: cbb839de72110dea1851dd3e85080b7923af2540
   ExpoSymbols: 1ae04ce686de719b9720453b988d8bc5bf776c68
   ExpoSystemUI: 6cd74248a2282adf6dec488a75fa532d69dee314

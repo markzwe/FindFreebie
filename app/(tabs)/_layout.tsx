@@ -3,7 +3,7 @@ import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
 import { router } from 'expo-router';
 import { useAuthStore } from '@/store/auth.store';
 import { useEffect } from 'react';
-
+import React from 'react';
 export default function TabLayout() {
   // const segments = useSegments();
   // const currentSegment = segments[segments.length - 1];

@@ -1,7 +1,6 @@
 import {
   Alert,
   Platform,
-  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -10,7 +9,7 @@ import {
 
 import { ACTIONS, SETTINGS } from "@/constants";
 import { COLORS, SHADOW } from "@/constants/theme";
-import { getUserFromDatabase, logout } from "@/lib/appwrite";
+import { deleteAccount, getCurrentUser, getUserFromDatabase, logout } from "@/lib/appwrite";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useEffect, useState, version } from "react";
@@ -20,12 +19,13 @@ import { User } from "@/type";
 import Constants from 'expo-constants';
 import TermsModal from "@/components/termsInfo/TermsModal";
 import PrivacyModal from "@/components/termsInfo/PrivacyModal";
+import React from 'react';
 const Profile = () => {
   const [userDB, setUserDB] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [termsModalVisible, setTermsModalVisible] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
-
+  
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -50,6 +50,31 @@ const Profile = () => {
       Alert.alert('Error', 'Failed to logout. Please try again.');
     }
   };
+  const handleDeleteAccount = async () => {
+    const account = await getUserFromDatabase();
+    if (!account) {
+      Alert.alert('Error', 'No authenticated user found.');
+      return;
+    }
+    Alert.alert(
+      'Delete Account',
+      'Are you sure you want to delete your account? This action cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: () => confirmDeleteAccount(account.$id) },
+      ]
+    );
+  };
+
+  const confirmDeleteAccount = async (accountId: string) => { 
+    try {
+      await deleteAccount(accountId);
+      // router.replace('/(auth)/sign-in')
+    } catch (error) {
+      Alert.alert('Error', 'Failed to delete account. Please try again')
+      
+    }
+  }
 
   const renderActions = () => (
     <View style={[styles.actionsContainer, { justifyContent: 'center' }]}>
@@ -129,6 +154,15 @@ const Profile = () => {
           <Text style={[styles.settingText, styles.logoutText]}>Logout</Text>
         </View>
       </TouchableOpacity>
+      <TouchableOpacity 
+        style={[styles.settingItem, styles.logoutButton]} 
+        onPress={handleDeleteAccount}
+      >
+        <View style={styles.settingLeft}>
+          <MaterialCommunityIcons name="trash-can" size={24} color="#EF4444" />
+          <Text style={[styles.settingText, styles.logoutText]}>Delete Account</Text>
+        </View>
+      </TouchableOpacity>
       {/* <TouchableOpacity 
         style={[styles.settingItem, styles.logoutButton]} 
         onPress={handleLogout}
@@ -143,16 +177,8 @@ const Profile = () => {
 
   
   return (
-    <>
     <View style={styles.outerContainer}>
-      <ScrollView 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={styles.scrollContainer} 
-        scrollToOverflowEnabled={true}
-        overScrollMode="always"
-        style={styles.scrollView}
-        
-      >
+      <View style={styles.scrollView}>
           <View style={[styles.overlay, { paddingTop: useSafeAreaInsets().top}]}>
             <View style={styles.profileHeader}>
               <View style={styles.avatarContainer}>
@@ -160,34 +186,30 @@ const Profile = () => {
                   source={{ uri: userDB?.avatar || undefined}}
                   style={styles.avatar}
                 />
-                <TouchableOpacity style={styles.editIcon}>
-                  <Ionicons name="camera" size={18} color="#fff" />
-                </TouchableOpacity>
               </View>
               <Text style={styles.userName}>{userDB?.name || 'Guest User'}</Text>
               <Text style={styles.userEmail}>{userDB?.email || 'guest@example.com'}</Text>
             </View>
           </View>
-
         <View style={styles.content}>
           {renderActions()}
           {renderSettings()}
-        </View>
         <View style={styles.bottomContainer}>
-  <Image 
-    source={require('../../../assets/images/icon.png')}
-    style={styles.appIcon}
-    contentFit="cover"
-  />
-  <Text style={styles.appName}>Findfreebies</Text>
-  <Text style={styles.appVersion}>Version {Constants.expoConfig?.version}</Text>
-  <Text style={styles.madeWithText}>Made with ❤️ in Dayton</Text>
-</View>
-      </ScrollView>
+        <Image 
+          source={require('../../../assets/images/icon.png')}
+          style={styles.appIcon}
+          contentFit="cover"
+        />
+        <Text style={styles.appName}>Findfreebies</Text>
+        <Text style={styles.appVersion}>Version {Constants.expoConfig?.version}</Text>
+        <Text style={styles.madeWithText}>Made with ❤️ in Dayton</Text>
+        </View>
+        </View>
+      </View>
       <TermsModal visible={termsModalVisible} onClose={() => setTermsModalVisible(false)} />
       <PrivacyModal visible={privacyModalVisible} onClose={() => setPrivacyModalVisible(false)} />
     </View>
-    </>
+   
   );
 };
 
@@ -199,14 +221,13 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     backgroundColor: COLORS.background,
+    paddingBottom: 90,
   },
   scrollContainer: {
-    flexGrow: 1,
-    backgroundColor: COLORS.background,
-    paddingBottom: 40, // Reduced bottom padding
+        backgroundColor: COLORS.background,
   },
   header: {
-    height: 280,
+    height: 10,
     borderBottomLeftRadius: 30,
     borderBottomRightRadius: 30,
     overflow: 'hidden',
@@ -219,11 +240,10 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     alignItems: 'center',
-    marginTop: 20,
   },
   avatarContainer: {
     position: 'relative',
-    marginBottom: 16,
+  
   },
   avatar: {
     width: 80,
@@ -245,23 +265,20 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#fff',
   },
+  content: {
+    paddingHorizontal: 20
+  },
   userName: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
-    marginBottom: 4,
     fontFamily: 'Rubik-Bold',
   },
   userEmail: {
     fontSize: 16,
     color: 'rgba(255,255,255,0.8)',
-    marginBottom: 26,
   },
-  content: {
-    flex: 1,
-    padding: 20,
-    marginTop: -40,
-  },
+
   statsContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -348,11 +365,9 @@ const styles = StyleSheet.create({
     color: '#EF4444',
   },
   bottomContainer: {
-    padding: 20,
     alignItems: 'center',
 
     paddingTop: 10,
-    paddingBottom: 50,
   },
   appIcon: {
     borderRadius: 12,

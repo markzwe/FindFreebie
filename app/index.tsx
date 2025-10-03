@@ -3,6 +3,7 @@ import { Redirect, router } from 'expo-router';
 import { View, Text, StyleSheet } from 'react-native';
 import { getCurrentUser } from '../lib/appwrite';
 import { useAuthStore } from '../store/auth.store';
+import React from 'react';
 
 export default function Index() {
 
