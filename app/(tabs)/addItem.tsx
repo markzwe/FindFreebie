@@ -14,7 +14,7 @@ import {
   TextInput,
   StyleSheet,
   Modal,
-  Switch
+  // Switch
 } from "react-native";
 
 import { Image } from "expo-image";
@@ -27,6 +27,8 @@ import * as Location from 'expo-location';
 import { AddressType, Coordinates, Item } from "@/type";
 import { account, addItems, getUserFromDatabase } from "@/lib/appwrite";
 import { ID } from "react-native-appwrite";
+import { Host, Picker, Switch } from '@expo/ui/swift-ui';
+import { background, cornerRadius, frame, shadow } from "@expo/ui/swift-ui/modifiers";
 
 export default function AddItem() {
   const router = useRouter();
@@ -325,7 +327,7 @@ export default function AddItem() {
               <Text style={styles.fieldLabel}>
                 Category <Text style={styles.required}>(Required)</Text>
               </Text>
-              <View style={styles.categoryRow}>
+              {/* <View style={styles.categoryRow}>
                 {["Food", "Item"].map((c) => (
                   <TouchableOpacity
                     key={c}
@@ -352,7 +354,23 @@ export default function AddItem() {
                     </Text>
                   </TouchableOpacity>
                 ))}
-              </View>
+              </View> */}
+                  <Host matchContents>
+                  <Picker
+
+                      options={["Food", "Item"]}
+                      selectedIndex={category === "Food" ? 0 : 1}
+                      onOptionSelected={({ nativeEvent: { index } }) => {
+                        setCategory(index === 0 ? "Food" : "Item");
+                      }}
+                      variant="segmented"
+                      modifiers={[
+                        background(COLORS.accent),
+                        cornerRadius(10),
+                      
+                       ]}
+                    />
+                  </Host>
             </View>
 
             {/* FIXED: Date & Time with proper optional time handling */}
@@ -432,9 +450,9 @@ export default function AddItem() {
                 </View>
                 <View style={styles.locationSwitchContainer}>
                 <Text style={styles.locationText}>Show precise location</Text>
-                <Switch
+                {/* <Switch
                   disabled={isSharing}
-                  trackColor={{ false: COLORS.white, true: COLORS.accent }}
+                  trackColor={{ false: COLORS.accentDark, true: COLORS.accent }}
                   thumbColor={ COLORS.white}
                   ios_backgroundColor={COLORS.white}
                 
@@ -443,7 +461,22 @@ export default function AddItem() {
                   style={{
                     alignSelf: "center",
                   }}
+                /> */}
+           <Host matchContents>
+
+                   <Switch
+                  value={showPreciseLocation}
+                  onValueChange={toggleSwitch}
+                  color={COLORS.accent}
+                  label="Play music"
+                  variant="switch"
+                 modifiers={[
+                  background(COLORS.border),
+                  cornerRadius(10),
+                 ]}
                 />
+     </Host>
+
                 </View>
               </View>
 
@@ -453,7 +486,7 @@ export default function AddItem() {
                     location={{ coordinates: userLocation }} 
                     viewOnly={false}  
                     setLocation={(newLocation) => setUserLocation(newLocation.coordinates)}
-                  />
+                    />
                 </View>
               )}
             </View>
@@ -498,7 +531,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 80,
   },
 
   /* HEADER */
@@ -635,7 +668,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.2,
   },
   required: {
-    color: COLORS.danger,
+    color: COLORS.textMuted,
   },
   input: {
     backgroundColor: COLORS.surface,
@@ -673,9 +706,14 @@ const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   locationSwitchContainer: {
+    position: "absolute",
+    right: SPACING.md,
+    top: SPACING.md,
+    bottom: SPACING.sm,
     flexDirection: "column",
     alignItems: "flex-end",
     justifyContent: "flex-end",
+    gap: SPACING.sm,
   },
   inputFilled: {
     borderColor: COLORS.accent,
@@ -701,10 +739,7 @@ const styles = StyleSheet.create({
   },
 
   /* CATEGORY */
-  categoryRow: {
-    flexDirection: "row",
-    gap: SPACING.md,
-  },
+ 
   categoryButton: {
     flex: 1,
     flexDirection: "row",

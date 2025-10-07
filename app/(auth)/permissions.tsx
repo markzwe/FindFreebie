@@ -12,39 +12,44 @@ export default function OnBoarding() {
   const router = useRouter();
 
   useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location was denied');
-        return;
-      }
-    })();
-  }, []);
+    const checkLocationPermission = async () => {
+      setIsLoading(true);
+      try {
+        // First check if we already have permission
+        const { status: existingStatus } = await Location.getForegroundPermissionsAsync();
+        
+        if (existingStatus === 'granted') {
+          // If we already have permission, get the location and navigate
+          const currentLocation = await Location.getCurrentPositionAsync({});
+          setLocation(currentLocation);
+          router.replace('/(tabs)');
+          return;
+        }
 
-  const handleEnableLocation = async () => {
-    setIsLoading(true);
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      
-      if (status !== 'granted') {
-        setErrorMsg('Permission to access location is required for the app to function properly.');
+        // If we don't have permission, request it
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        
+        if (status !== 'granted') {
+          setErrorMsg('Location permission is required to find free food near you. Please enable it in your device settings.');
+          setIsLoading(false);
+          return;
+        }
+        
+        // If permission was just granted, get the location
+        const currentLocation = await Location.getCurrentPositionAsync({});
+        setLocation(currentLocation);
+        router.replace('/(tabs)');
+        
+      } catch (error) {
+        console.error('Location Error:', error);
+        setErrorMsg('Unable to access your location. Please check your device settings and try again.');
+      } finally {
         setIsLoading(false);
-        return;
       }
+    };
 
-      // Get current position
-      const currentLocation = await Location.getCurrentPositionAsync({});
-      setLocation(currentLocation);
-      
-      // Navigate to sign-in after successful permission
-      router.replace('/(tabs)');
-    } catch (error) {
-      setErrorMsg('Failed to get your location. Please try again.');
-      console.error('Location Error:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    checkLocationPermission();
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -68,7 +73,7 @@ export default function OnBoarding() {
       <View style={styles.buttonContainer}>
         <TouchableOpacity 
           style={[styles.button, styles.primaryButton]} 
-          onPress={handleEnableLocation}
+          // onPress={checkLocationPermission}
           disabled={isLoading}
         >
           <Text style={styles.buttonText}>

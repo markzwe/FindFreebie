@@ -333,10 +333,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  title: {
+   title: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    textAlign: "center",
     fontSize: 20,
     fontFamily: FONT.family.bold,
     color: COLORS.text,
+    includeFontPadding: false,
+    textAlignVertical: "center",
   },
   closeButton: {
     padding: 8,

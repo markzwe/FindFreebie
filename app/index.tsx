@@ -30,7 +30,7 @@ export default function Index() {
   //  TODO: CHANGE LOGIC TO SIGN IN AFTER BUYING APPWRITE PRO
   else{
     return (
-      <Redirect href="/(auth)/permissions" />     
+      <Redirect href="/(auth)/sign-in" />     
     );
   }
 }

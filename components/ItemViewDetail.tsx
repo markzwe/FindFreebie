@@ -215,7 +215,7 @@ const ItemViewDetailModal: React.FC<ItemViewDetailModalProps> = ({
       onRequestClose={onClose}
       presentationStyle="formSheet"
     >
-      <SafeAreaView style={styles.container}>
+      <View style={styles.container}>
         <Header onClose={onClose} />
         
         <ScrollView 
@@ -265,7 +265,7 @@ const ItemViewDetailModal: React.FC<ItemViewDetailModalProps> = ({
             </TouchableOpacity>
           </View>
         )}
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 };
@@ -273,11 +273,11 @@ const ItemViewDetailModal: React.FC<ItemViewDetailModalProps> = ({
 // Sub-components for better organization
 const Header: React.FC<{ onClose: () => void }> = ({ onClose }) => (
   <View style={styles.header}>
-    <View style={styles.headerLeft} />
-    <Text style={styles.headerTitle}>Details</Text>
     <TouchableOpacity onPress={onClose} style={styles.closeButton}>
       <Ionicons name="close" size={24} color={COLORS.accent} />
     </TouchableOpacity>
+    <Text style={styles.headerTitle}>Details</Text>
+    <View style={styles.headerRight} />
   </View>
 );
 
@@ -474,7 +474,7 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.sm,
   },
-  headerLeft: {
+  headerRight: {
     width: 40,
   },
   headerTitle: {
@@ -484,6 +484,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   closeButton: {
+    backgroundColor: COLORS.border,
+    borderRadius: RADIUS.xl,
     width: 30,
     height: 30,
     justifyContent: 'center',

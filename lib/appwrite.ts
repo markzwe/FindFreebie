@@ -1,4 +1,4 @@
-import { Account, Avatars, Client, Databases, ID, OAuthProvider, Query, Storage, TablesDB } from "react-native-appwrite";
+import { Account, Avatars, Client, Databases, ID, OAuthProvider, Query, Storage, TablesDB, AuthenticatorType } from "react-native-appwrite";
 
 import { Chatroom, ChatroomResponse, Item, MessageResponse } from "@/type";
 import { makeRedirectUri } from 'expo-auth-session';
@@ -28,91 +28,51 @@ export const avatar = new Avatars(client);
 export const tablesDB = new TablesDB(client);
 
 export async function login() {
-    // Build the redirect URI string at runtime so it reads from expo config
-    const deepLinkStr = makeRedirectUri({ preferLocalhost: true });
-    const redirectUri = Linking.createURL("/");
-
+    const deepLink = new URL(makeRedirectUri({ preferLocalhost: true }));
+    const scheme = `${deepLink.protocol}//`;
     try {
-        // Try a few possible SDK methods to obtain an OAuth URL. Different Appwrite
-        // SDKs/expos may expose slightly different helper names or return shapes.
-        let authUrl: string | null = null;
-
-        // Some SDK versions expose createOAuth2Token which may return a URL or an object
-        if (typeof (account as any).createOAuth2Token === 'function') {
-            try {
-                const res = await Promise.resolve((account as any).createOAuth2Token({
-                    provider: OAuthProvider.Google,
-                    success: deepLinkStr,
-                    failure: deepLinkStr,
-                }));
-                if (typeof res === 'string') authUrl = res;
-                else if (res && typeof res === 'object') {
-                    // sometimes SDK returns { url: '...' } or similar
-                    authUrl = res.url || res.redirect || null;
-                }
-            } catch (e) {
-                // ignore and try other options
-                console.debug('createOAuth2Token attempt failed:', e);
+        // Remove MFA authenticator if it exists
+        try {
+        await account.deleteIdentity({identityId: "google"});
+        } catch (error) {
+            // Ignore if no MFA is set up
+            console.log('No MFA to remove');
+        }
+        const response = account.createOAuth2Token(
+            {
+                provider: OAuthProvider.Google,
+                success: `${deepLink}`,
+                failure: `${deepLink}`,
             }
+        )
+
+        if (!response) {
+            throw new Error("Failed to create OAuth2 token");
         }
 
-        // Fallback: createOAuth2Session may be available in other SDK versions
-        if (!authUrl && typeof (account as any).createOAuth2Session === 'function') {
-            try {
-                const res = await Promise.resolve((account as any).createOAuth2Session(
-                    OAuthProvider.Google,
-                    deepLinkStr,
-                    deepLinkStr
-                ));
-                if (typeof res === 'string') authUrl = res;
-                else if (res && typeof res === 'object') authUrl = res.url || res.redirect || null;
-            } catch (e) {
-                console.debug('createOAuth2Session attempt failed:', e);
-            }
+        const browserResult  = await WebBrowser.openAuthSessionAsync(`${response}`, scheme);
+
+        if (browserResult.type !== "success") {
+            throw new Error("Failed to login");            
         }
-
-        // Final fallback: try to build an auth URL from the Appwrite endpoint (best-effort)
-        if (!authUrl && appwriteConfig.endpoint && appwriteConfig.projectId) {
-            try {
-                const provider = 'google';
-                const base = appwriteConfig.endpoint.replace(/\/$/, '');
-                const succ = encodeURIComponent(deepLinkStr);
-                const fail = encodeURIComponent(deepLinkStr);
-                authUrl = `${base}/v1/account/sessions/oauth2/${provider}?project=${appwriteConfig.projectId}&success=${succ}&failure=${fail}`;
-            } catch (e) {
-                console.debug('manual auth URL build failed:', e);
-            }
-        }
-
-        if (!authUrl) throw new Error('Unable to obtain OAuth URL from SDK or build it');
-
-        const browserResult = await WebBrowser.openAuthSessionAsync(authUrl, redirectUri);
-
-        if (browserResult.type !== 'success') {
-            console.warn('Auth session did not complete successfully', browserResult);
-            throw new Error('Failed to login');
-        }
-
-        const resultUrl = (browserResult as any).url || browserResult.url;
-        if (!resultUrl) throw new Error('No redirect URL returned from auth session');
-
-        const url = new URL(resultUrl);
+        const url = new URL((browserResult as any).url);
         const secret = url.searchParams.get('secret')?.toString();
         const userId = url.searchParams.get('userId')?.toString();
         if (!secret || !userId) {
-            throw new Error('Missing secret or userId in redirect URL');
+            throw new Error("Failed to login");
         }
-
         const session = await account.createSession({ userId, secret });
         const user = await account.get();
-        // Create user in database if needed
         const dbUser = await createUser(user.name, user.email);
-        console.log('Login successful, user data:', dbUser);
+        console.log("Login successful, user data:", dbUser);
         return session;
 
     } catch (error) {
-        console.error('login error:', error);
+        console.log(error);
         return null;
+    }
+    finally {
+        WebBrowser.dismissAuthSession();
     }
 }
 
@@ -129,98 +89,160 @@ export async function logout() {
     }
 }
 
-export async function deleteAccount(userId: string) {
+/**
+ * Deletes all records associated with a user and their account
+ * @param userId - The ID of the user to delete
+ * @returns Promise<boolean> - True if deletion was successful, false otherwise
+ */
+export async function deleteAccount(userId: string): Promise<boolean> {
+    await account.deleteSession({ sessionId: "current" });
+    if (!userId) {
+        console.error('User ID is required');
+        return false;
+    }
+
+    const dbId = appwriteConfig.databaseId;
+    if (!dbId) {
+        console.error('Database ID is not configured');
+        return false;
+    }
+
     try {
-        // Ensure the current authenticated user matches the identityId
-        // const current = await getCurrentUser();
-        // if (!current || current.$id !== userId) {
-        //     throw new Error('Not authenticated as the target account');
-        // }
+        // Delete user's items
+        await deleteUserRecords({
+            tableId: appwriteConfig.itemsTableId!,
+            field: 'user',
+            value: userId,
+            errorMessage: 'user items'
+        });
 
-        // Try to find the user's DB row (if any)
-        const dbId = appwriteConfig.databaseId!;
-
-        // Delete items created by the user
-        try {
-            const items = await tablesDB.listRows({
-                databaseId: dbId,
-                tableId: appwriteConfig.itemsTableId!,
-                queries: [Query.equal('user', [userId])]
-            });
-            for (const row of items.rows) {
-                await tablesDB.deleteRow({ databaseId: dbId, tableId: appwriteConfig.itemsTableId!, rowId: row.$id });
-            }
-        } catch (e) {
-            console.warn('Failed to delete user items:', e);
-        }
-
-        // Delete chatrooms where the user is seller or buyer
-        try {
-            const chatrooms = await tablesDB.listRows({
-                databaseId: dbId,
-                tableId: appwriteConfig.chatRoomTableId!,
-                queries: [Query.or([
+        // Delete user's chatrooms (as seller or buyer)
+        await deleteUserRecords({
+            tableId: appwriteConfig.chatRoomTableId!,
+            queries: [
+                Query.or([
                     Query.equal('seller', [userId]),
                     Query.equal('buyer', [userId])
-                ])]
-            });
-            for (const row of chatrooms.rows) {
-                await tablesDB.deleteRow({ databaseId: dbId, tableId: appwriteConfig.chatRoomTableId!, rowId: row.$id });
-            }
-        } catch (e) {
-            console.warn('Failed to delete chatrooms for user:', e);
-        }
+                ])
+            ],
+            errorMessage: 'chatrooms'
+        });
 
-        // Delete messages sent by the user (best-effort)
-        try {
-            const messages = await tablesDB.listRows({
-                databaseId: dbId,
-                tableId: appwriteConfig.messagesTableId!,
-                queries: [Query.equal('senderId', [userId])]
-            });
-            for (const row of messages.rows) {
-                await tablesDB.deleteRow({ databaseId: dbId, tableId: appwriteConfig.messagesTableId!, rowId: row.$id });
-            }
-        } catch (e) {
-            console.warn('Failed to delete messages for user:', e);
-        }
+        // Delete user's messages
+        await deleteUserRecords({
+            tableId: appwriteConfig.messagesTableId!,
+            field: 'senderId',
+            value: userId,
+            errorMessage: 'messages'
+        });
 
-        // Delete the user DB row
-        try {
-            await tablesDB.deleteRow({ databaseId: dbId, tableId: appwriteConfig.userTableId!, rowId: userId });
-        } catch (e) {
-            console.warn('Failed to delete user DB row:', e);
-        }
+        // Delete user's profile
+        await deleteUserRecords({
+            tableId: appwriteConfig.userTableId!,
+            rowId: userId,
+            errorMessage: 'user profile'
+        });
 
-        // Finally delete the Appwrite account for the current user. Most client SDKs
-        // expose account.delete() for the current authenticated user.
-        if (typeof (account as any).delete === 'function') {
-            await (account as any).delete();
-        } else if (typeof (account as any).deleteAccount === 'function') {
-            await (account as any).deleteAccount();
-        } else if (typeof (account as any).deleteIdentity === 'function') {
-            // last-resort: if only deleteIdentity exists, try that
-            await (account as any).deleteIdentity({ userId });
-        } else {
-            throw new Error('No supported account deletion method available on the SDK');
-        }
+        // Delete the Appwrite account
+        await deleteAppwriteAccount(userId);
 
         return true;
     } catch (error) {
-        console.error('deleteAccount error:', error);
+        console.error('Failed to delete account:', error);
         return false;
-    }
-    finally {
-        // Ensure user is logged out locally
+    } finally {
+        // Always ensure user is logged out
         try {
             await logout();
         } catch (e) {
-            // ignore
+            console.warn('Error during logout after account deletion:', e);
         }
     }
 }
 
+interface DeleteRecordsOptions {
+    tableId: string;
+    field?: string;
+    value?: string | string[];
+    queries?: any[];
+    rowId?: string;
+    errorMessage: string;
+}
 
+/**
+ * Helper function to delete records from a table
+ */
+async function deleteUserRecords({
+    tableId,
+    field,
+    value,
+    queries = [],
+    rowId,
+    errorMessage
+}: DeleteRecordsOptions): Promise<void> {
+    const dbId = appwriteConfig.databaseId!;
+    
+    try {
+        if (rowId) {
+            // Direct deletion if rowId is provided
+            await tablesDB.deleteRow({ databaseId: dbId, tableId, rowId });
+        } else if (field && value) {
+            // Query and delete multiple rows
+            const query = [Query.equal(field, Array.isArray(value) ? value : [value]), ...queries];
+            const { rows } = await tablesDB.listRows({
+                databaseId: dbId,
+                tableId,
+                queries: query
+            });
+            
+            await Promise.all(
+                rows.map(row => 
+                    tablesDB.deleteRow({ databaseId: dbId, tableId, rowId: row.$id })
+                )
+            );
+        } else if (queries.length > 0) {
+            // Handle custom queries
+            const { rows } = await tablesDB.listRows({
+                databaseId: dbId,
+                tableId,
+                queries
+            });
+            
+            await Promise.all(
+                rows.map(row => 
+                    tablesDB.deleteRow({ databaseId: dbId, tableId, rowId: row.$id })
+                )
+            );
+        }
+    } catch (error) {
+        console.warn(`Failed to delete ${errorMessage}:`, error);
+        // Continue with account deletion even if some cleanup fails
+    }
+}
+
+/**
+ * Helper function to delete the Appwrite account using available SDK methods
+ */
+async function deleteAppwriteAccount(userId: string): Promise<void> {
+    const deleteMethods = [
+        () => (account as any).delete?.(userId),
+        () => (account as any).deleteAccount?.(userId),
+        () => (account as any).deleteIdentity?.({ userId })
+    ];
+
+    for (const method of deleteMethods) {
+        try {
+            if (typeof method === 'function') {
+                await method();
+                return; // Exit if any method succeeds
+            }
+        } catch (error) {
+            console.warn('Account deletion method failed, trying next one:', error);
+        }
+    }
+
+    throw new Error('No supported account deletion method available on the SDK');
+}
 
 export async function getCurrentUser() {
     try {
