@@ -95,9 +95,8 @@ export default function Home() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
       <View style={styles.searchSection}>
-              <SearchBar />
+          <SearchBar />
             </View>
-
             {/* Filter Section */}
             <View style={styles.filterSection}>
               <View style={styles.filterRow}>
@@ -111,7 +110,6 @@ export default function Home() {
                 <View style={styles.distanceContainer}>
                   <DistanceChooser 
                     visible={true}
-                    onClose={() => {}}
                   />
                 </View>
               </View>
@@ -160,7 +158,6 @@ export default function Home() {
 
           </View>
         }
-      
         numColumns={2}
       />
     </SafeAreaView>

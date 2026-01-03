@@ -7,7 +7,6 @@ import { router, useLocalSearchParams } from 'expo-router';
 
 interface DistanceChooserProps {
   visible: boolean;
-  onClose: () => void;
 }
 
 const { width } = Dimensions.get('window');

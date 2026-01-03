@@ -1,7 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import React, { useState } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { COLORS } from '@/constants/theme';
+import { COLORS, RADIUS, SPACING } from '@/constants/theme';
 import { filerDataTypes } from '@/constants';
 import CustomPicker from './CustomPicker';
 
@@ -41,5 +41,9 @@ const styles = StyleSheet.create({
     width: 150, // Fixed width for compact size
     height: 44, // Match the height of the location container
     justifyContent: 'center',
+    backgroundColor: COLORS.accentDark,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginRight: SPACING.md,
   } as const,
 })

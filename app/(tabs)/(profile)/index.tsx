@@ -163,15 +163,6 @@ const Profile = () => {
           <Text style={[styles.settingText, styles.logoutText]}>Delete Account</Text>
         </View>
       </TouchableOpacity>
-      {/* <TouchableOpacity 
-        style={[styles.settingItem, styles.logoutButton]} 
-        onPress={handleLogout}
-      >
-        <View style={styles.settingLeft}>
-          <MaterialCommunityIcons name="delete" size={24} color="#EF4444" />
-          <Text style={[styles.settingText, styles.logoutText]}>Delete Account</Text>
-        </View>
-      </TouchableOpacity> */}
     </View>
   );
 

@@ -85,7 +85,7 @@ const CustomPicker: React.FC<CustomPickerProps> = ({
           {selectedItem?.name || placeholder}
         </Text>
         <Animated.View style={{ transform: [{ rotate }] }}>
-          <Ionicons name="chevron-down" size={20} color={COLORS.text} />
+          <Ionicons name="chevron-down" size={20} color={COLORS.white} />
         </Animated.View>
       </TouchableOpacity>
 
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   selectedText: {
     flex: 1,
     fontSize: FONT.size.sm,
-    color: COLORS.text,
+    color: COLORS.white,
     fontFamily: FONT.family.regular,
     marginRight: SPACING.xs,
   },

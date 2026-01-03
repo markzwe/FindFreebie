@@ -463,8 +463,7 @@ export default function AddItem() {
                   }}
                 /> */}
            <Host matchContents>
-
-                   <Switch
+                 <Switch
                   value={showPreciseLocation}
                   onValueChange={toggleSwitch}
                   color={COLORS.accent}
@@ -475,7 +474,7 @@ export default function AddItem() {
                   cornerRadius(10),
                  ]}
                 />
-     </Host>
+           </Host>
 
                 </View>
               </View>

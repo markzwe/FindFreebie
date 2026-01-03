@@ -201,7 +201,7 @@ export default function Chat() {
         contentInsetAdjustmentBehavior='automatic'
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>Uh oh! No messages found</Text>
+            <Text style={styles.emptyText}>No Messages Found</Text>
           </View>
         }
       />
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    alignSelf: 'center',
+    paddingTop: 250,
   },
   emptyText: {
     fontSize: FONT.size.md,

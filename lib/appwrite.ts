@@ -1,8 +1,7 @@
-import { Account, Avatars, Client, Databases, ID, OAuthProvider, Query, Storage, TablesDB, AuthenticatorType } from "react-native-appwrite";
+import { Account, Avatars, Client, Databases, ID, OAuthProvider, Query, Storage, TablesDB, Functions } from "react-native-appwrite";
 
 import { Chatroom, ChatroomResponse, Item, MessageResponse } from "@/type";
 import { makeRedirectUri } from 'expo-auth-session';
-import * as Linking from "expo-linking";
 import * as Location from 'expo-location';
 import * as WebBrowser from 'expo-web-browser';
 
@@ -26,6 +25,7 @@ export const account = new Account(client);
 export const databases = new Databases(client);
 export const avatar = new Avatars(client);
 export const tablesDB = new TablesDB(client);
+export const functions = new Functions(client);
 
 export async function login() {
     const deepLink = new URL(makeRedirectUri({ preferLocalhost: true }));
@@ -95,63 +95,80 @@ export async function logout() {
  * @returns Promise<boolean> - True if deletion was successful, false otherwise
  */
 export async function deleteAccount(userId: string): Promise<boolean> {
-    await account.deleteSession({ sessionId: "current" });
     if (!userId) {
         console.error('User ID is required');
         return false;
     }
-
+    console.log("Deleting account for user:", userId)
+    
     const dbId = appwriteConfig.databaseId;
     if (!dbId) {
         console.error('Database ID is not configured');
         return false;
     }
-
+    
     try {
-        // Delete user's items
-        await deleteUserRecords({
-            tableId: appwriteConfig.itemsTableId!,
-            field: 'user',
-            value: userId,
-            errorMessage: 'user items'
-        });
+        // Get the account user ID (different from database user ID)
+        const accountUser = await getCurrentUser();
+        console.log("Account user:", accountUser?.$id);
+        if (!accountUser) {
+            console.error('No authenticated user found');
+            return false;
+        }
 
-        // Delete user's chatrooms (as seller or buyer)
-        await deleteUserRecords({
-            tableId: appwriteConfig.chatRoomTableId!,
-            queries: [
-                Query.or([
-                    Query.equal('seller', [userId]),
-                    Query.equal('buyer', [userId])
-                ])
-            ],
-            errorMessage: 'chatrooms'
-        });
+        // First, delete the Appwrite account
+        // This is done first to prevent any further operations if account deletion fails
+        await deleteAppwriteAccount(accountUser.$id);
+        console.log("Appwrite account deletion initiated");
+        
+        // Then clean up user data (these will run in parallel)
+        console.log("Starting cleanup of user data...");
+        const cleanupPromises = [
+            // Delete user's items
+            deleteUserRecords({
+                tableId: appwriteConfig.itemsTableId!,
+                field: 'user',
+                value: userId,
+                errorMessage: 'user items'
+            }),
+            
+            // Delete user's chatrooms (as seller or buyer)
+            deleteUserRecords({
+                tableId: appwriteConfig.chatRoomTableId!,
+                queries: [
+                    Query.or([
+                        Query.equal('seller', [userId]),
+                        Query.equal('buyer', [userId])
+                    ])
+                ],
+                errorMessage: 'chatrooms'
+            }),
+            
+            // Delete user's messages
+            deleteUserRecords({
+                tableId: appwriteConfig.messagesTableId!,
+                field: 'senderId',
+                value: userId,
+                errorMessage: 'messages'
+            }),
+            
+            // Delete user's profile from database
+            deleteUserRecords({
+                tableId: appwriteConfig.userTableId!,
+                rowId: userId,
+                errorMessage: 'user profile'
+            })
+        ];
 
-        // Delete user's messages
-        await deleteUserRecords({
-            tableId: appwriteConfig.messagesTableId!,
-            field: 'senderId',
-            value: userId,
-            errorMessage: 'messages'
-        });
-
-        // Delete user's profile
-        await deleteUserRecords({
-            tableId: appwriteConfig.userTableId!,
-            rowId: userId,
-            errorMessage: 'user profile'
-        });
-
-        // Delete the Appwrite account
-        await deleteAppwriteAccount(userId);
-
+        // Wait for all cleanup operations to complete
+        await Promise.all(cleanupPromises);
+        
         return true;
     } catch (error) {
         console.error('Failed to delete account:', error);
         return false;
     } finally {
-        // Always ensure user is logged out
+        // Always ensure user is logged out, even if there was an error
         try {
             await logout();
         } catch (e) {
@@ -159,6 +176,7 @@ export async function deleteAccount(userId: string): Promise<boolean> {
         }
     }
 }
+
 
 interface DeleteRecordsOptions {
     tableId: string;
@@ -171,7 +189,7 @@ interface DeleteRecordsOptions {
 
 /**
  * Helper function to delete records from a table
- */
+*/
 async function deleteUserRecords({
     tableId,
     field,
@@ -219,31 +237,32 @@ async function deleteUserRecords({
         // Continue with account deletion even if some cleanup fails
     }
 }
-
 /**
- * Helper function to delete the Appwrite account using available SDK methods
+ * Helper function to delete the Appwrite account using client-side SDK
  */
-async function deleteAppwriteAccount(userId: string): Promise<void> {
-    const deleteMethods = [
-        () => (account as any).delete?.(userId),
-        () => (account as any).deleteAccount?.(userId),
-        () => (account as any).deleteIdentity?.({ userId })
-    ];
-
-    for (const method of deleteMethods) {
-        try {
-            if (typeof method === 'function') {
-                await method();
-                return; // Exit if any method succeeds
-            }
-        } catch (error) {
-            console.warn('Account deletion method failed, trying next one:', error);
+async function deleteAppwriteAccount(accountUserId: string): Promise<void> {
+    try {
+        if (!accountUserId) {
+            throw new Error('Account user ID is required');
         }
+
+        const execution = await functions.createExecution({
+            functionId: '68fcd8ec0005486ac461', // Replace with your actual Function ID
+            body: JSON.stringify({ userId: accountUserId }), // Changed from payload to body
+            async: false
+        });
+        if (execution.status === 'completed') {
+            const response = JSON.parse(execution.responseBody);
+            console.log("Function success:", response);
+        } else {
+            console.error("Function failed:", execution.responseBody);
+            // Just log the failure, don't throw an error
+        }
+    } catch (error) {
+        console.error('❌ Error deleting user account:', error);
+        throw error;
     }
-
-    throw new Error('No supported account deletion method available on the SDK');
 }
-
 export async function getCurrentUser() {
     try {
         const user = await account.get();
