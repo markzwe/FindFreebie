@@ -1,11 +1,12 @@
 # FindFreebie
 
+<img width="300" height="300" alt="1" src="https://github.com/user-attachments/assets/a50dc721-d76f-409a-9d2e-ae25821f56e2" />
+
 [![React Native](https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo-1B1F23?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
 [![Appwrite](https://img.shields.io/badge/Appwrite-F02E65?style=for-the-badge&logo=appwrite&logoColor=white)](https://appwrite.io/)
 
 FindFreebie is a mobile application that connects people who want to give away free food and items with those who are looking for them. The app helps reduce waste, save money, and build stronger communities by making it easy to share resources locally.
-<img width="500" height="500" alt="1" src="https://github.com/user-attachments/assets/a50dc721-d76f-409a-9d2e-ae25821f56e2" />
 
 
 
