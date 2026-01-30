@@ -5,8 +5,7 @@
 [![Appwrite](https://img.shields.io/badge/Appwrite-F02E65?style=for-the-badge&logo=appwrite&logoColor=white)](https://appwrite.io/)
 
 FindFreebie is a mobile application that connects people who want to give away free food and items with those who are looking for them. The app helps reduce waste, save money, and build stronger communities by making it easy to share resources locally.
-<img width="1206" height="2622" alt="Simulator Screenshot - iPhone 17 - 2026-01-30 at 13 44 03" src="https://github.com/user-attachments/assets/c9a092e2-0a8c-45fb-ba54-f9eb5ad0834c" />
-<img width="1024" height="1024" alt="1" src="https://github.com/user-attachments/assets/a50dc721-d76f-409a-9d2e-ae25821f56e2" />
+<img width="500" height="500" alt="1" src="https://github.com/user-attachments/assets/a50dc721-d76f-409a-9d2e-ae25821f56e2" />
 
 
 
